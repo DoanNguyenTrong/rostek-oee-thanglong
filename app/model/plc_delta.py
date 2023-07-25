@@ -4,7 +4,7 @@ import utils.vntime as VnTimeStamps
 from configure import *
 from .data_model import MachineData
 from sqlalchemy.orm import Session
-from .app import engine
+from app import engine
 
 class DELTA_SA2():
     def __init__(self,redisClient, configure):
@@ -36,7 +36,7 @@ class DELTA_SA2():
             self.deviceData[deviceId]["timestamp"]  = int(float(VnTimeStamps.now()))
             if "runningNumber" not in deviceData:
                 self.deviceData[deviceId]["runningNumber"]  = 0
-                self.deviceData[deviceId]["lastStatus"]     = STATUS.DISCONNECT
+                self.deviceData[deviceId]["status"]         = STATUS.DISCONNECT
                 self.deviceData[deviceId]["actual"]         = 0
                 self.deviceData[deviceId]["ng"]             = 0
                 self.deviceData[deviceId]["changeProduct"]  = 0
@@ -98,7 +98,7 @@ class DELTA_SA2():
                         self.__read_modbus_data(device,deviceId)
                     except Exception as e:
                         logging.error(str(e))
-                        self.deviceData[deviceId]["MCStatus"] = STATUS.DISCONNECT
+                        self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
                     self.__save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
             time.sleep(GeneralConfig.READINGRATE)
 
@@ -114,11 +114,11 @@ class DELTA_SA2():
         # logging.warning(f"{device['ID']} --- {r}")
         registerData = r.registers
         if int(registerData[5]) == 1:
-            mcstatus = STATUS.RUN
+            status = STATUS.RUN
         elif int(registerData[5]) == 2:
-            mcstatus = STATUS.IDLE
+            status = STATUS.IDLE
         else:
-            mcstatus = STATUS.ERROR
+            status = STATUS.ERROR
 
         actual          = int(registerData[1])
         temperature     = float(registerData[5])
@@ -127,22 +127,23 @@ class DELTA_SA2():
 
         self.deviceData[deviceId]["temperature"]    = temperature
         self.deviceData[deviceId]["humidity"]       = humidity
-        if self.__is_status_change(deviceId,mcstatus) or self.__is_actual_change(deviceId, actual):
+        if self.__is_status_change(deviceId,status) or self.__is_actual_change(deviceId, actual) or self.__is_changing_product(deviceId, changeProduct):
             timeNow = int(float(VnTimeStamps.now()))
             self.deviceData[deviceId]["timestamp"]  = timeNow
             eventTopic = deviceId + "event"
             self.__redisClient.lpush(eventTopic ,json.dumps(self.deviceData[deviceId]))
             insertData = MachineData(
                 device_id           = deviceId, 
-                machine_status      = mcstatus,
+                machine_status      = status,
                 actual              = actual,
                 timestamp           = timeNow,
                 humidity            = humidity,
+                runningNumber       = self.deviceData[deviceId]["runningNumber"],
                 temperature         = temperature
                 )
-            with Session(engine) as session:
-                session.add(insertData)
-                session.commit()
+            session = Session()
+            session.add(insertData)
+            session.commit()
 
             logging.error("Complete !")
 
@@ -150,8 +151,8 @@ class DELTA_SA2():
         """
         Check if machine status change
         """
-        if self.deviceData[deviceId]["MCStatus"] != status:
-            self.deviceData[deviceId]["MCStatus"] = status
+        if self.deviceData[deviceId]["status"] != status:
+            self.deviceData[deviceId]["status"] = status
             return True
         return False
         
@@ -164,30 +165,25 @@ class DELTA_SA2():
             return True
         return False
     
-    def __is_ng_change(self, deviceId, ng):
-        """
-        Check if ng change
-        """
-        if self.deviceData[deviceId]["ng"] != ng:
-            self.deviceData[deviceId]["ng"] = ng
-            return True
-        return False
-
-    def __is_changing_product_change(self, deviceId, changeProduct):
+    def __is_changing_product(self, deviceId, changeProduct):
         """
         Check if changing product
         """
         if self.deviceData[deviceId]["changeProduct"] != changeProduct:
             self.deviceData[deviceId]["changeProduct"] = changeProduct
+            self.deviceData[deviceId]["runningNumber"] += 1
             return True
         return False
     
-    def __is_running_number_change(self, deviceId, runningNumber):
-        """
-        Check if running_number change
-        """
-        if self.deviceData[deviceId]["runningNumber"] != runningNumber:
-            self.deviceData[deviceId]["runningNumber"] = runningNumber
-            return True
-        return False
+    # def __is_ng_change(self, deviceId, ng):
+    #     """
+    #     Check if ng change
+    #     """
+    #     if self.deviceData[deviceId]["ng"] != ng:
+    #         self.deviceData[deviceId]["ng"] = ng
+    #         return True
+    #     return False
+
+    
+
 

@@ -5,6 +5,7 @@ from configure import *
 import schedule
 from .model.data_model import MachineData
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
 def synchronize_data(configure, redisClient, mqttClient):
     """
@@ -38,4 +39,19 @@ def sync_humidity_temperature(configure, redisClient, mqttClient):
             mqttClient.publish(mqttTopic,json.dumps(publishData))
 
 def query_data(deviceId,timeFrom,timeTo):
-    stmt = select(MachineData).where(MachineData.device_id == deviceId)
+    data = []
+    session = Session()
+    results = session.query(MachineData).filter(and_(MachineData.timestamp >= timeFrom,MachineData.timestamp <= timeTo, MachineData.deviceId == deviceId)).all()
+    for result in results:
+        data.append(
+            {
+                "deviceId"        : result.deviceId,
+                "machineStatus"   : result.machineStatus,
+                "actual"          : result.actual,
+                "runningNumber"   : result.runningNumber,
+                "timestamp"       : result.timestamp,
+                "temperature"     : result.temperature,
+                "humidity"        : result.humidity
+            }
+        )
+    return data

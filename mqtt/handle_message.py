@@ -5,7 +5,7 @@ import schedule
 from app.service_utils import sync_humidity_temperature
 from mqtt import mqtt_client
 from sqlalchemy import select
-from app.
+from app.service_utils import query_data
 
 def handle_humtemp_rate_data(deviceId,data,redisClient):
     """
