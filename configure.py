@@ -42,14 +42,14 @@ deltaConfigure = {
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [
             {
-                "ID"        : "DVES_E94F2E",
+                "ID"        : "DVES_E94F2H",
                 "UID"       : 2,
                 "COUNT"     : 6,
                 "ADDRESS"   : 4505,
             }
             ,
             {
-                "ID"        : "DVES_E94F2C",
+                "ID"        : "DVES_E94F2U",
                 "UID"       : 1,
                 "COUNT"     : 6,
                 "ADDRESS"   : 4505,

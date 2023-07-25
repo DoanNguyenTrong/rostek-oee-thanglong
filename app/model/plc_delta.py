@@ -97,7 +97,7 @@ class DELTA_SA2():
                     try:
                         self.__read_modbus_data(device,deviceId)
                     except Exception as e:
-                        logging.error(str(e))
+                        # logging.error(str(e))
                         self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
                     self.__save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
             time.sleep(GeneralConfig.READINGRATE)

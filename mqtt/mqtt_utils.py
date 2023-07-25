@@ -23,7 +23,7 @@ def on_message(client, userdata, message):
     topic   = str(message.topic)
     deviceId = str(topic.split("/")[2])
     if "/humtemprate" in topic:
-        workers.add_task(handle_humtemp_rate_data,deviceId,data,redisClient)
+        workers.add_task(handle_humtemp_rate_data,client,data,redisClient)
     elif "/requestData" in topic:
         workers.add_task(handle_humtemp_rate_data,deviceId,data,client)
     
