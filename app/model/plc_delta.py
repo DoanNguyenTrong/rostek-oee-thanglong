@@ -1,12 +1,10 @@
-import time
 from pymodbus.client.sync import ModbusSerialClient
-import logging
-from configure import  GeneralConfig
-import struct
+import logging, json, struct, time
 import utils.vntime as VnTimeStamps
 from configure import *
-import json 
-import utils.vntime as VnTimestamps
+from .data_model import MachineData
+from sqlalchemy.orm import Session
+from .app import engine
 
 class DELTA_SA2():
     def __init__(self,redisClient, configure):
@@ -36,11 +34,18 @@ class DELTA_SA2():
             deviceData  = self.__redisClient.hgetall(rawTopic)
             self.deviceData[deviceId]               = {}
             self.deviceData[deviceId]["timestamp"]  = int(float(VnTimeStamps.now()))
-            if "RunningNumber" not in deviceData:
-                self.deviceData[deviceId]["RunningNumber"] = 0
-                self.deviceData[deviceId]["lastStatus"]    = STATUS.DISCONNECT
+            if "runningNumber" not in deviceData:
+                self.deviceData[deviceId]["runningNumber"]  = 0
+                self.deviceData[deviceId]["lastStatus"]     = STATUS.DISCONNECT
+                self.deviceData[deviceId]["actual"]         = 0
+                self.deviceData[deviceId]["ng"]             = 0
+                self.deviceData[deviceId]["changeProduct"]  = 0
             else:
-                self.deviceData[deviceId]["RunningNumber"] = int(deviceData["RunningNumber"]) 
+                self.deviceData[deviceId]["runningNumber"]  = int(deviceData["runningNumber"]) 
+                self.deviceData[deviceId]["lastStatus"]     = int(deviceData["lastStatus"]) 
+                self.deviceData[deviceId]["actual"]         = int(deviceData["actual"]) 
+                self.deviceData[deviceId]["ng"]             = int(deviceData["ng"]) 
+                self.deviceData[deviceId]["changeProduct"]  = int(deviceData["changeProduct"])
 
     def __connect_modbus(self):
         """
@@ -115,16 +120,31 @@ class DELTA_SA2():
         else:
             mcstatus = STATUS.ERROR
 
-        actual = int(registerData[1])
-        temperature = float(registerData[5])
-        humidity    = float(registerData[1])
+        actual          = int(registerData[1])
+        temperature     = float(registerData[5])
+        humidity        = float(registerData[1])
+        changeProduct   = int(registerData[10])
+
         self.deviceData[deviceId]["temperature"]    = temperature
         self.deviceData[deviceId]["humidity"]       = humidity
         if self.__is_status_change(deviceId,mcstatus) or self.__is_actual_change(deviceId, actual):
-            timeNow = VnTimeStamps.now()
+            timeNow = int(float(VnTimeStamps.now()))
             self.deviceData[deviceId]["timestamp"]  = timeNow
             eventTopic = deviceId + "event"
             self.__redisClient.lpush(eventTopic ,json.dumps(self.deviceData[deviceId]))
+            insertData = MachineData(
+                device_id           = deviceId, 
+                machine_status      = mcstatus,
+                actual              = actual,
+                timestamp           = timeNow,
+                humidity            = humidity,
+                temperature         = temperature
+                )
+            with Session(engine) as session:
+                session.add(insertData)
+                session.commit()
+
+            logging.error("Complete !")
 
     def __is_status_change(self, deviceId, status):
         """
@@ -150,6 +170,15 @@ class DELTA_SA2():
         """
         if self.deviceData[deviceId]["ng"] != ng:
             self.deviceData[deviceId]["ng"] = ng
+            return True
+        return False
+
+    def __is_changing_product_change(self, deviceId, changeProduct):
+        """
+        Check if changing product
+        """
+        if self.deviceData[deviceId]["changeProduct"] != changeProduct:
+            self.deviceData[deviceId]["changeProduct"] = changeProduct
             return True
         return False
     

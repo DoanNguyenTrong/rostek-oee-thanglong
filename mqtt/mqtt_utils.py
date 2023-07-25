@@ -16,6 +16,7 @@ def on_connect(client, userdata, flags, rc):
     client.reconnecting_flag    = False
     logging.warning("Connected to broker MQTT")
     client.subscribe("cmnd/V2/+/humtemprate")
+    client.subscribe("cmnd/V2/+/requestData")
     
 def on_message(client, userdata, message):
     data    = json.loads(str(message.payload.decode("utf-8")))
@@ -23,6 +24,8 @@ def on_message(client, userdata, message):
     deviceId = str(topic.split("/")[2])
     if "/humtemprate" in topic:
         workers.add_task(handle_humtemp_rate_data,deviceId,data,redisClient)
+    elif "/requestData" in topic:
+        workers.add_task(handle_humtemp_rate_data,deviceId,data,client)
     
 def connect(client,broker,port):
     try:

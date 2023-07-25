@@ -4,10 +4,15 @@ from utils.threadpool import ThreadPool
 from app.service_utils import *
 import coloredlogs
 import schedule
+from sqlalchemy import create_engine
+import logging
 
 logging.basicConfig(filename='logging.log',level=logging.INFO)
 coloredlogs.install(level='info', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
 workers = ThreadPool(100)
+
+
+engine = create_engine("sqlite:///"+ GeneralConfig.DATAFILE)
 
 redisClient = redis.Redis(
         host= RedisCnf.HOST,

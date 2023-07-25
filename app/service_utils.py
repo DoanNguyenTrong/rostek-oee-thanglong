@@ -3,6 +3,8 @@ import time
 import json 
 from configure import *
 import schedule
+from .model.data_model import MachineData
+from sqlalchemy.orm import Session
 
 def synchronize_data(configure, redisClient, mqttClient):
     """
@@ -34,3 +36,6 @@ def sync_humidity_temperature(configure, redisClient, mqttClient):
             publishData["temperature"]  = device["temperature"]
             publishData["humidity"]     = device["humidity"]
             mqttClient.publish(mqttTopic,json.dumps(publishData))
+
+def query_data(deviceId,timeFrom,timeTo):
+    stmt = select(MachineData).where(MachineData.device_id == deviceId)
