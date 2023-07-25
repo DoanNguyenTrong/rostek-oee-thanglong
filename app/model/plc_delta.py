@@ -10,12 +10,11 @@ import utils.vntime as VnTimestamps
 
 class DELTA_SA2():
     def __init__(self,redisClient, configure):
-        self.__redisClient       = redisClient
-        self.__modbusConnection  = False
-        self.__kernelActive      = False
-        self.__configure         = configure
-        self.deviceData          = {}
-        self.__startup = int(float(VnTimeStamps.now()))
+        self.__redisClient          = redisClient
+        self.__modbusConnection     = False
+        self.__kernelActive         = False
+        self.__configure            = configure
+        self.deviceData             = {}
         self.__get_redis_data()
 
     def start(self):
@@ -35,9 +34,8 @@ class DELTA_SA2():
             deviceId    = device["ID"]
             rawTopic    = "/device/V2/" + device["ID"] + "/raw"
             deviceData  = self.__redisClient.hgetall(rawTopic)
-
-            self.deviceData[deviceId]          = {}
-            self.deviceData[deviceId]["now"]   = int(float(VnTimeStamps.now()))
+            self.deviceData[deviceId]               = {}
+            self.deviceData[deviceId]["timestamp"]  = int(float(VnTimeStamps.now()))
             if "RunningNumber" not in deviceData:
                 self.deviceData[deviceId]["RunningNumber"] = 0
                 self.deviceData[deviceId]["lastStatus"]    = STATUS.DISCONNECT
@@ -118,7 +116,10 @@ class DELTA_SA2():
             mcstatus = STATUS.ERROR
 
         actual = int(registerData[1])
-
+        temperature = float(registerData[5])
+        humidity    = float(registerData[1])
+        self.deviceData[deviceId]["temperature"]    = temperature
+        self.deviceData[deviceId]["humidity"]       = humidity
         if self.__is_status_change(deviceId,mcstatus) or self.__is_actual_change(deviceId, actual):
             timeNow = VnTimeStamps.now()
             self.deviceData[deviceId]["timestamp"]  = timeNow
@@ -161,6 +162,3 @@ class DELTA_SA2():
             return True
         return False
 
-    
-
-        

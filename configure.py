@@ -27,10 +27,12 @@ class RedisCnf(object):
     PASSWORD    = ""
     SIEMENSINFO = "/info/siemens"
     DELTAINFO   = "/info/delta"
+    HUMTEMPTOPIC= "/humtemp" 
 
 class GeneralConfig(object):
     READINGRATE = 5
     SENDINGRATE = 5
+    DEFAULTRATE = 5
 
 deltaConfigure = {
         "METHOD"        :  "rtu",

@@ -15,20 +15,14 @@ def on_connect(client, userdata, flags, rc):
     client.connected_flag       = True
     client.reconnecting_flag    = False
     logging.warning("Connected to broker MQTT")
-    client.subscribe("cmnd/V2/+/OEEWorkingShift")
-    client.subscribe("cmnd/V2/+/OEECHANGEPRODUCT")
+    client.subscribe("cmnd/V2/+/humtemprate")
     
 def on_message(client, userdata, message):
     data    = json.loads(str(message.payload.decode("utf-8")))
     topic   = str(message.topic)
     deviceId = str(topic.split("/")[2])
-    if "/OEEWorkingShift" in topic:
-        workers.add_task(handle_shift_data,deviceId,data,redisClient)
-    elif "/OEECHANGEPRODUCT" in topic:
-        workers.add_task(handle_production_data,deviceId,data,redisClient)
-    #     print(deviceId)
-    # print(topic)
-    # print(data)
+    if "/humtemprate" in topic:
+        workers.add_task(handle_humtemp_rate_data,deviceId,data,redisClient)
     
 def connect(client,broker,port):
     try:

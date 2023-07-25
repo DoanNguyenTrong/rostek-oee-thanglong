@@ -2,6 +2,7 @@ import logging
 import time
 import json 
 from configure import *
+import schedule
 
 def synchronize_data(configure, redisClient, mqttClient):
     """
@@ -18,7 +19,18 @@ def synchronize_data(configure, redisClient, mqttClient):
                 redisData = None
             # logging.error(redisData)
             if redisData:
-                redisData['clientid'] = device["ID"]
+                redisData["clientid"] = device["ID"]
                 logging.warning(redisData)
                 mqttClient.publish(mqttTopic, json.dumps(redisData))
             time.sleep(GeneralConfig.SENDINGRATE)
+
+def sync_humidity_temperature(configure, redisClient, mqttClient):
+    for device in configure["LISTDEVICE"]:
+        data        = redisClient.hgetall("/device/V2/" + device["ID"] + "/raw")
+        mqttTopic   = "stat/V2/" + device["ID"]+"/HUMTEMP"
+        publishData = {}
+        if "temperature" in data and "humidity" in data:
+            publishData["clientid"]     = device["ID"]
+            publishData["temperature"]  = device["temperature"]
+            publishData["humidity"]     = device["humidity"]
+            mqttClient.publish(mqttTopic,json.dumps(publishData))
