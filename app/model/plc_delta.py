@@ -3,6 +3,7 @@ import logging, json, struct, time
 import utils.vntime as VnTimeStamps
 from configure import *
 from .data_model import MachineData
+from .unsynced_data import UnsyncedMachineData
 from sqlalchemy.orm import Session
 from app import engine
 
@@ -42,7 +43,7 @@ class DELTA_SA2():
                 self.deviceData[deviceId]["changeProduct"]  = 0
             else:
                 self.deviceData[deviceId]["runningNumber"]  = int(deviceData["runningNumber"]) 
-                self.deviceData[deviceId]["lastStatus"]     = int(deviceData["lastStatus"]) 
+                self.deviceData[deviceId]["status"]         = int(deviceData["status"]) 
                 self.deviceData[deviceId]["actual"]         = int(deviceData["actual"]) 
                 self.deviceData[deviceId]["ng"]             = int(deviceData["ng"]) 
                 self.deviceData[deviceId]["changeProduct"]  = int(deviceData["changeProduct"])
@@ -97,7 +98,7 @@ class DELTA_SA2():
                     try:
                         self.__read_modbus_data(device,deviceId)
                     except Exception as e:
-                        # logging.error(str(e))
+                        logging.error(str(e))
                         self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
                     self.__save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
             time.sleep(GeneralConfig.READINGRATE)
@@ -113,6 +114,7 @@ class DELTA_SA2():
         )
         # logging.warning(f"{device['ID']} --- {r}")
         registerData = r.registers
+        # logging.error(r.registers)
         if int(registerData[5]) == 1:
             status = STATUS.RUN
         elif int(registerData[5]) == 2:
@@ -123,35 +125,47 @@ class DELTA_SA2():
         actual          = int(registerData[1])
         temperature     = float(registerData[5])
         humidity        = float(registerData[1])
-        changeProduct   = int(registerData[10])
+        changeProduct   = int(registerData[11])
 
         self.deviceData[deviceId]["temperature"]    = temperature
         self.deviceData[deviceId]["humidity"]       = humidity
-        if self.__is_status_change(deviceId,status) or self.__is_actual_change(deviceId, actual) or self.__is_changing_product(deviceId, changeProduct):
+
+        statusChange    = self.__is_status_change(deviceId,status)
+        actualChange    = self.__is_actual_change(deviceId,actual)
+        changingProduct = self.__is_changing_product(deviceId,changeProduct)
+        if statusChange or actualChange or changingProduct:
             timeNow = int(float(VnTimeStamps.now()))
             self.deviceData[deviceId]["timestamp"]  = timeNow
-            eventTopic = deviceId + "event"
-            self.__redisClient.lpush(eventTopic ,json.dumps(self.deviceData[deviceId]))
             insertData = MachineData(
-                device_id           = deviceId, 
-                machine_status      = status,
+                deviceId            = deviceId, 
+                machineStatus       = status,
                 actual              = actual,
                 timestamp           = timeNow,
                 humidity            = humidity,
                 runningNumber       = self.deviceData[deviceId]["runningNumber"],
                 temperature         = temperature
                 )
-            session = Session()
+            insertUnsyncedData = UnsyncedMachineData(
+                deviceId            = deviceId, 
+                machineStatus       = status,
+                actual              = actual,
+                timestamp           = timeNow,
+                humidity            = humidity,
+                runningNumber       = self.deviceData[deviceId]["runningNumber"],
+                temperature         = temperature
+                )
+            session = Session(engine)
             session.add(insertData)
+            session.add(insertUnsyncedData)
             session.commit()
-
-            logging.error("Complete !")
+            logging.error("Complete saving data!")
 
     def __is_status_change(self, deviceId, status):
         """
         Check if machine status change
         """
         if self.deviceData[deviceId]["status"] != status:
+            logging.error(f"Status change, previous status: {self.deviceData[deviceId]['status']} - current status {status}")
             self.deviceData[deviceId]["status"] = status
             return True
         return False
@@ -161,6 +175,7 @@ class DELTA_SA2():
         Check if actual change
         """
         if self.deviceData[deviceId]["actual"] != actual:
+            logging.error(f"Actual change, previous actual: {self.deviceData[deviceId]['actual']} - current actual {actual}")
             self.deviceData[deviceId]["actual"] = actual
             return True
         return False
@@ -170,6 +185,7 @@ class DELTA_SA2():
         Check if changing product
         """
         if self.deviceData[deviceId]["changeProduct"] != changeProduct:
+            logging.error(f"Changing product, previous product: {self.deviceData[deviceId]['changeProduct']} - current product {changeProduct}")
             self.deviceData[deviceId]["changeProduct"] = changeProduct
             self.deviceData[deviceId]["runningNumber"] += 1
             return True

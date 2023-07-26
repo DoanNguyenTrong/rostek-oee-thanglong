@@ -37,22 +37,22 @@ class GeneralConfig(object):
 
 deltaConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA4",
+        "PORT"          :  "/dev/ttyUSB0",
         "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [
             {
                 "ID"        : "DVES_E94F2H",
-                "UID"       : 2,
-                "COUNT"     : 6,
-                "ADDRESS"   : 4505,
-            }
-            ,
-            {
-                "ID"        : "DVES_E94F2U",
                 "UID"       : 1,
-                "COUNT"     : 6,
+                "COUNT"     : 12,
                 "ADDRESS"   : 4505,
             }
+            # ,
+            # {
+            #     "ID"        : "DVES_E94F2U",
+            #     "UID"       : 1,
+            #     "COUNT"     : 6,
+            #     "ADDRESS"   : 4505,
+            # }
         ]
     }

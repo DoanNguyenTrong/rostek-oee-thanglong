@@ -3,9 +3,9 @@ from sqlalchemy.orm import DeclarativeBase
 
 class Base(DeclarativeBase):
     pass
-
-class MachineData(Base):
-    __tablename__ = "Machine Data"
+    
+class UnsyncedMachineData(Base):
+    __tablename__ = "Unsynced Machine Data"
 
     id              = Column("id", Integer, primary_key=True, autoincrement=True)
     deviceId        = Column("device_id", String(16), nullable=False)
