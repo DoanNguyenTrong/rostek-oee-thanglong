@@ -1,6 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float
 from app import db
-
+"""
+Database for saving events
+TO DO: update auto clean after ... days
+"""
 class MachineData(db.Model):
     __tablename__ = "Machine Data"
 

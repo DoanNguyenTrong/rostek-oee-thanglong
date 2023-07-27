@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float
 from app import db
-
+"""
+Cached database, when sent successfully, clear record
+"""
 class UnsyncedMachineData(db.Model):
     __tablename__ = "Unsynced Machine Data"
 

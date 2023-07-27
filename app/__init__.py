@@ -4,24 +4,37 @@ import coloredlogs, os, redis
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from flask_restful import Api
 
 # logging.basicConfig(filename='logging.log',level=logging.INFO)
+"""
+Configure log
+"""
 coloredlogs.install(level='info', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
 
+"""
+Configure Flask and database
+"""
 APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_PATH = os.path.join(APP_PATH, 'app')
 print(TEMPLATE_PATH)
 
 app = Flask(__name__, template_folder=TEMPLATE_PATH)
+
 CORS(app)
 SQL_URI = "sqlite:///"+ GeneralConfig.DATAFILE
 app.config["SQLALCHEMY_DATABASE_URI"] = SQL_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-app.config['SQLALCHEMY_POOL_SIZE'] = 20
+# app.config['SQLALCHEMY_POOL_SIZE'] = 20
 
-##--CONFIGURE REDIS
 db=SQLAlchemy(app=app)
+api = Api(app)
+app.config['JWT_SECRET_KEY'] = 'jwt-secret-string'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+"""
+Config redis
+"""
 redisClient = redis.Redis(
         host= RedisCnf.HOST,
         port= RedisCnf.PORT, 

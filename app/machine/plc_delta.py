@@ -18,7 +18,7 @@ class DELTA_SA2():
 
     def start(self):
         """
-        Khởi tạo đọc dữ liệu modbus
+        Start function
         """
         self.__kernelActive = True
         logging.warning("Init Kernel successful")
@@ -27,7 +27,7 @@ class DELTA_SA2():
        
     def __get_redis_data(self):
         """
-        Load dữ liệu cũ từ REDIS
+        Load old data from redis
         """
         for device in self.__configure["LISTDEVICE"]:
             deviceId    = device["ID"]
@@ -50,7 +50,7 @@ class DELTA_SA2():
 
     def __connect_modbus(self):
         """
-        Khởi tạo kết nối MODBUS RTU
+        Init MODBUS RTU connection
         """
         try:
             logging.error(self.__configure)
@@ -68,7 +68,7 @@ class DELTA_SA2():
 
     def __save_raw_data_to_redis(self, topic, data):
         """
-        Lưu dữ liệu vào redis
+        Save raw data to redis
         """
         # logging.info(topic)
         for key in data.keys():
@@ -76,7 +76,7 @@ class DELTA_SA2():
 
     def __parse_register_data(self,c,id1,id2):
         """
-        Parse dữ liệu modbus
+        Parse modbus data
         """
         a = c[id1]
         b = c[id2]
@@ -85,7 +85,7 @@ class DELTA_SA2():
 
     def __start_reading_modbus(self):
         """
-        Bắt đầu đọc data của những thiết bị 
+        Start reading modbus from device 
         """
         while self.__kernelActive:
             if not self.__modbusConnection:
@@ -105,7 +105,7 @@ class DELTA_SA2():
 
     def __read_modbus_data(self,device,deviceId):
         """
-        Tạo request đọc modbus và parse data 
+        Make request to read modbus and parse data 
         """
         r = self.__modbusMaster.read_holding_registers(
             address = device["ADDRESS"], 
@@ -128,7 +128,6 @@ class DELTA_SA2():
         temperature     = float(registerData[5])
         humidity        = float(registerData[1])
         changeProduct   = int(registerData[11])
-
         self.deviceData[deviceId]["temperature"]    = temperature
         self.deviceData[deviceId]["humidity"]       = humidity
 
