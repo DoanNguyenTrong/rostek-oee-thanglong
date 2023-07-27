@@ -2,9 +2,7 @@ from configure import deltaConfigure
 import logging
 import json
 import schedule
-from app.service_utils import sync_humidity_temperature
-from sqlalchemy import select
-from app.service_utils import query_data
+from app.action.service_utils import sync_humidity_temperature, query_data
 
 def handle_humtemp_rate_data(client,data,redisClient):
     """

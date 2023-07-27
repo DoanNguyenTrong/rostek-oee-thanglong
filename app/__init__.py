@@ -3,7 +3,6 @@ from configure import *
 import coloredlogs, os, redis
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from .service_utils import init_objects
 from flask_cors import CORS
 
 # logging.basicConfig(filename='logging.log',level=logging.INFO)
@@ -30,6 +29,7 @@ redisClient = redis.Redis(
         charset="utf-8",
         decode_responses = True
     )
+from app.action.service_utils import init_objects
 
 init_objects()
 

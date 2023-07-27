@@ -1,4 +1,3 @@
-import logging
 from configure import  *
 from app import *
 

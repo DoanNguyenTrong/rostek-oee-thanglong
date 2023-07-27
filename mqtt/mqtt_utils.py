@@ -1,9 +1,9 @@
-import time
-import logging
+import time, logging
 from configure import *
 from utils.threadpool import ThreadPool
 from .handle_message import *
 from app import redisClient
+
 workers = ThreadPool(100)
 
 def on_disconnect(client, userdata, rc):
@@ -25,7 +25,7 @@ def on_message(client, userdata, message):
     if "/humtemprate" in topic:
         workers.add_task(handle_humtemp_rate_data,client,data,redisClient)
     elif "/requestData" in topic:
-        workers.add_task(handle_humtemp_rate_data,deviceId,data,client)
+        workers.add_task(handle_request_data,deviceId,data,client)
     
 def connect(client,broker,port):
     try:
@@ -35,9 +35,6 @@ def connect(client,broker,port):
         client.on_disconnect=on_disconnect
         client.connect(broker, port ,MQTTCnf.MQTT_KEEPALIVE)
         client.username_pw_set(username=MQTTCnf.MQTT_USERNAME, password=MQTTCnf.MQTT_PASSWORD)
-
-        # client.on_message = on_message
-        # client.loop_start()
         client.connected_flag = True
         client.loop_forever()
         
