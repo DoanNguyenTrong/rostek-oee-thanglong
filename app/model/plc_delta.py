@@ -114,7 +114,9 @@ class DELTA_SA2():
         )
         # logging.warning(f"{device['ID']} --- {r}")
         registerData = r.registers
-        # logging.error(r.registers)
+        # logging.error(f"Actual - {r.registers[1]}")
+        # logging.error(f"Status - {r.registers[5]}")
+        # logging.error(f"ChangeProduct - {r.registers[11]}")
         if int(registerData[5]) == 1:
             status = STATUS.RUN
         elif int(registerData[5]) == 2:
@@ -133,6 +135,7 @@ class DELTA_SA2():
         statusChange    = self.__is_status_change(deviceId,status)
         actualChange    = self.__is_actual_change(deviceId,actual)
         changingProduct = self.__is_changing_product(deviceId,changeProduct)
+        # logging.warning(self.deviceData[deviceId])
         if statusChange or actualChange or changingProduct:
             timeNow = int(float(VnTimeStamps.now()))
             self.deviceData[deviceId]["timestamp"]  = timeNow

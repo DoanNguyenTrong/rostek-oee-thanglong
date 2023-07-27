@@ -18,7 +18,6 @@ def synchronize_data(configure, redisClient, mqttClient, engine):
             try:
                 session = Session(engine)
                 result = session.query(UnsyncedMachineData).order_by(UnsyncedMachineData.id.desc()).first()
-                logging.error(result)
                 sendData = {
                     "deviceId"        : result.deviceId,
                     "machineStatus"   : result.machineStatus,
@@ -29,14 +28,13 @@ def synchronize_data(configure, redisClient, mqttClient, engine):
                     "humidity"        : result.humidity
                 }
             except Exception as e:
-                logging.error(e)
+                # logging.error(e)
                 sendData = None
             if sendData:
-                logging.warning(sendData)
                 session = Session(engine)
-                logging.error(result.id)
-                session.query(UnsyncedMachineData).filter_by(id=result.id).delete()
+                session.query(UnsyncedMachineData).filter_by(timestamp=result.timestamp).delete()
                 logging.error("Complete sending")
+                result = None
             time.sleep(GeneralConfig.SENDINGRATE)
 
 def sync_humidity_temperature(configure, redisClient, mqttClient):
