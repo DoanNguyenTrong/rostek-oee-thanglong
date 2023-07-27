@@ -46,7 +46,7 @@ def synchronize_data(mqttClient):
     Go to database named UnsyncedMachineData, get data and publish by MQTT to server 
     """
     while True:        
-        sendData   = None
+        sendData = None
         try:
             result = UnsyncedMachineData.query().order_by(UnsyncedMachineData.id.desc()).first()
             sendData = {
@@ -61,9 +61,10 @@ def synchronize_data(mqttClient):
         except Exception as e:
             # logging.error(e)
             sendData = None
+        logging.error(sendData)
         if sendData:
             UnsyncedMachineData.query().filter_by(timestamp=result.timestamp).delete()
-            mqttClient.publish("ok",sendData)
+            mqttClient.publish("stat/V2/" + result.deviceId +"/OEEDATA",json.dumps(sendData))
             logging.error("Complete sending")
         time.sleep(GeneralConfig.SENDINGRATE)
 
