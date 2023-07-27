@@ -1,11 +1,9 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from configure import GeneralConfig
 # from app.model.data_model import *
-from app.model.unsynced_data import *
-from datetime import datetime
+# from app.model.unsynced_data import *
+from app import db
 
-engine = create_engine("sqlite:///"+ GeneralConfig.DATAFILE)
-Base.metadata.create_all(engine)
+db.drop_all()
+db.create_all()
 
 print("Init Database Done !")

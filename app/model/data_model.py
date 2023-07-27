@@ -1,10 +1,7 @@
-from sqlalchemy import Table, Column, Integer, String, Float
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import Column, Integer, String, Float
+from app import db
 
-class Base(DeclarativeBase):
-    pass
-
-class MachineData(Base):
+class MachineData(db.Model):
     __tablename__ = "Machine Data"
 
     id              = Column("id", Integer, primary_key=True, autoincrement=True)

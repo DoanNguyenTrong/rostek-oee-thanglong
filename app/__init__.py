@@ -1,18 +1,27 @@
-import redis
 from configure import RedisCnf
-from utils.threadpool import ThreadPool
-from app.service_utils import *
-import coloredlogs
-import schedule
-from sqlalchemy import create_engine
-import logging
+from configure import *
+import coloredlogs, os, redis
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from .service_utils import init_objects
+from flask_cors import CORS
 
 # logging.basicConfig(filename='logging.log',level=logging.INFO)
 coloredlogs.install(level='info', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
-workers = ThreadPool(100)
 
+APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMPLATE_PATH = os.path.join(APP_PATH, 'app')
+print(TEMPLATE_PATH)
 
-engine = create_engine("sqlite:///"+ GeneralConfig.DATAFILE)
+app = Flask(__name__, template_folder=TEMPLATE_PATH)
+CORS(app)
+SQL_URI = "sqlite:///"+ GeneralConfig.DATAFILE
+app.config["SQLALCHEMY_DATABASE_URI"] = SQL_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config['SQLALCHEMY_POOL_SIZE'] = 20
+
+##--CONFIGURE REDIS
+db=SQLAlchemy(app=app)
 
 redisClient = redis.Redis(
         host= RedisCnf.HOST,
@@ -22,20 +31,5 @@ redisClient = redis.Redis(
         decode_responses = True
     )
 
-def start_service(object,configure,redisClient,mqttClient):
-    humTempRate = redisClient.hgetall(RedisCnf.HUMTEMPTOPIC)
-    if "humtemprate" not in humTempRate:
-        humTempRate = GeneralConfig.DEFAULTRATE 
-    else:
-        humTempRate = int(humTempRate)
-    workers.add_task(object.start)
-    workers.add_task(synchronize_data, configure, redisClient, mqttClient, engine)
-    # schedule.every(humTempRate).seconds.do(sync_humidity_temperature, configure, redisClient, mqttClient)
+init_objects()
 
-
-def start_scheduling_thread():
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
-workers.add_task(start_scheduling_thread)

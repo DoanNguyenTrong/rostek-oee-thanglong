@@ -35,6 +35,11 @@ class GeneralConfig(object):
     DEFAULTRATE = 5
     DATAFILE    = "data.db"
 
+class FLASK(object):
+    HOST    = '0.0.0.0'
+    PORT    = 5103
+    DEBUG   = True
+
 deltaConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyUSB0",

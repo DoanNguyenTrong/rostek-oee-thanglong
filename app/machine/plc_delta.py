@@ -2,10 +2,10 @@ from pymodbus.client.sync import ModbusSerialClient
 import logging, json, struct, time
 import utils.vntime as VnTimeStamps
 from configure import *
-from .data_model import MachineData
-from .unsynced_data import UnsyncedMachineData
+from ..model.data_model import MachineData
+from ..model.unsynced_data import UnsyncedMachineData
 from sqlalchemy.orm import Session
-from app import engine
+from app import db
 
 class DELTA_SA2():
     def __init__(self,redisClient, configure):
@@ -157,10 +157,9 @@ class DELTA_SA2():
                 runningNumber       = self.deviceData[deviceId]["runningNumber"],
                 temperature         = temperature
                 )
-            session = Session(engine)
-            session.add(insertData)
-            session.add(insertUnsyncedData)
-            session.commit()
+            db.session.add(insertData)
+            db.session.add(insertUnsyncedData)
+            db.session.commit()
             logging.error("Complete saving data!")
 
     def __is_status_change(self, deviceId, status):
