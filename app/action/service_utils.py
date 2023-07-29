@@ -62,8 +62,6 @@ def synchronize_data(mqttClient):
                 "actual"          : result.actual,
                 "runningNumber"   : result.runningNumber,
                 "timestamp"       : result.timestamp,
-                "temperature"     : result.temperature,
-                "humidity"        : result.humidity,
                 "isChanging"      : result.isChanging
             }
         except Exception as e:
