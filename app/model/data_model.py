@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, Boolean
 from app import db
 """
 Database for saving events
@@ -15,3 +15,4 @@ class MachineData(db.Model):
     timestamp       = Column("timestamp", Integer)
     temperature     = Column("temperature", Float)
     humidity        = Column("humidity", Float)
+    isChanging      = Column("isChanging", Boolean)

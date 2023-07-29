@@ -30,8 +30,8 @@ class RedisCnf(object):
     HUMTEMPTOPIC= "/humtemp" 
 
 class GeneralConfig(object):
-    READINGRATE = 5
-    SENDINGRATE = 5
+    READINGRATE = 1
+    SENDINGRATE = 1
     DEFAULTRATE = 5
     DATAFILE    = "data.db"
 

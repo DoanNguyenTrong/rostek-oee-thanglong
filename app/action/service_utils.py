@@ -5,7 +5,7 @@ from configure import *
 from sqlalchemy import and_
 from app.machine.plc_delta import DELTA_SA2
 from utils.threadpool import ThreadPool
-from app import redisClient
+from app import redisClient, db
 
 workers = ThreadPool(100)
 
@@ -45,10 +45,16 @@ def synchronize_data(mqttClient):
     """
     Go to database named UnsyncedMachineData, get data and publish by MQTT to server 
     """
-    while True:        
+    while True:   
         sendData = None
+        # a =  db.session.query(UnsyncedMachineData).all()
+        # db.session.close()
+        # for i in a:
+        #     logging.error(i.id)
         try:
-            result = UnsyncedMachineData.query().order_by(UnsyncedMachineData.id.desc()).first()
+            # result = UnsyncedMachineData.query.order_by(UnsyncedMachineData.id.desc()).first()
+            result = db.session.query(UnsyncedMachineData).order_by(UnsyncedMachineData.id.desc()).first()
+            db.session.close()
             sendData = {
                 "deviceId"        : result.deviceId,
                 "machineStatus"   : result.machineStatus,
@@ -56,16 +62,25 @@ def synchronize_data(mqttClient):
                 "runningNumber"   : result.runningNumber,
                 "timestamp"       : result.timestamp,
                 "temperature"     : result.temperature,
-                "humidity"        : result.humidity
+                "humidity"        : result.humidity,
+                "isChanging"      : result.isChanging
             }
         except Exception as e:
             # logging.error(e)
             sendData = None
-        logging.error(sendData)
         if sendData:
-            UnsyncedMachineData.query().filter_by(timestamp=result.timestamp).delete()
-            mqttClient.publish("stat/V2/" + result.deviceId +"/OEEDATA",json.dumps(sendData))
-            logging.error("Complete sending")
+            logging.info(sendData)
+            try:
+                mqttClient.publish("stat/V3/" + result.deviceId +"/OEEDATA",json.dumps(sendData))
+                # logging.error("stat/V3/" + result.deviceId +"/OEEDATA")
+                db.session.query(UnsyncedMachineData).filter_by(timestamp=result.timestamp).delete()
+                db.session.commit()
+                db.session.close()
+                logging.warning("Complete sending")
+            except:
+                pass
+            result = None
+            sendData = None
         time.sleep(GeneralConfig.SENDINGRATE)
 
 def sync_humidity_temperature(configure, redisClient, mqttClient):
@@ -74,7 +89,7 @@ def sync_humidity_temperature(configure, redisClient, mqttClient):
     """
     for device in configure["LISTDEVICE"]:
         data        = redisClient.hgetall("/device/V2/" + device["ID"] + "/raw")
-        mqttTopic   = "stat/V2/" + device["ID"]+"/HUMTEMP"
+        mqttTopic   = "stat/V3/" + device["ID"]+"/HUMTEMP"
         publishData = {}
         if "temperature" in data and "humidity" in data:
             publishData["clientid"]     = device["ID"]
@@ -88,7 +103,7 @@ def query_data(deviceId,timeFrom,timeTo):
     Query data for request
     """
     data = []
-    results = MachineData.query().filter(and_(MachineData.timestamp >= timeFrom,MachineData.timestamp <= timeTo, MachineData.deviceId == deviceId)).all()
+    results = MachineData.query.filter(and_(MachineData.timestamp >= timeFrom,MachineData.timestamp <= timeTo, MachineData.deviceId == deviceId)).all()
     for result in results:
         data.append(
             {
@@ -98,7 +113,8 @@ def query_data(deviceId,timeFrom,timeTo):
                 "runningNumber"   : result.runningNumber,
                 "timestamp"       : result.timestamp,
                 "temperature"     : result.temperature,
-                "humidity"        : result.humidity
+                "humidity"        : result.humidity,
+                "isChanging"      : result.isChanging
             }
         )
     return data

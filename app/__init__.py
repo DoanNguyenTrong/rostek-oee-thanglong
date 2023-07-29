@@ -4,8 +4,7 @@ import coloredlogs, os, redis
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_restful import Api
-
+import logging
 # logging.basicConfig(filename='logging.log',level=logging.INFO)
 """
 Configure log
@@ -22,15 +21,12 @@ print(TEMPLATE_PATH)
 app = Flask(__name__, template_folder=TEMPLATE_PATH)
 
 CORS(app)
-SQL_URI = "sqlite:///"+ GeneralConfig.DATAFILE
+SQL_URI = "sqlite:///"+ APP_PATH +"/"+ GeneralConfig.DATAFILE
 app.config["SQLALCHEMY_DATABASE_URI"] = SQL_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 # app.config['SQLALCHEMY_POOL_SIZE'] = 20
 
 db=SQLAlchemy(app=app)
-api = Api(app)
-app.config['JWT_SECRET_KEY'] = 'jwt-secret-string'
-app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 """
 Config redis

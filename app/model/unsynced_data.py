@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, Boolean
 from app import db
 """
-Cached database, when sent successfully, clear record
+Cached database, when sending successful, clear record
 """
 class UnsyncedMachineData(db.Model):
     __tablename__ = "Unsynced Machine Data"
@@ -14,3 +14,4 @@ class UnsyncedMachineData(db.Model):
     timestamp       = Column("timestamp", Integer)
     temperature     = Column("temperature", Float)
     humidity        = Column("humidity", Float)
+    isChanging      = Column("isChanging", Boolean)

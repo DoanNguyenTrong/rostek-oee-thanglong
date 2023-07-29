@@ -145,7 +145,8 @@ class DELTA_SA2():
                 timestamp           = timeNow,
                 humidity            = humidity,
                 runningNumber       = self.deviceData[deviceId]["runningNumber"],
-                temperature         = temperature
+                temperature         = temperature,
+                isChanging          = changeProduct
                 )
             insertUnsyncedData = UnsyncedMachineData(
                 deviceId            = deviceId, 
@@ -154,11 +155,17 @@ class DELTA_SA2():
                 timestamp           = timeNow,
                 humidity            = humidity,
                 runningNumber       = self.deviceData[deviceId]["runningNumber"],
-                temperature         = temperature
+                temperature         = temperature,
+                isChanging          = changeProduct
                 )
-            db.session.add(insertData)
-            db.session.add(insertUnsyncedData)
-            db.session.commit()
+            try:
+                db.session.add(insertData)
+                db.session.add(insertUnsyncedData)
+                db.session.commit()
+                db.session.close() 
+            except:
+                db.session.rollback()
+                db.session.close() 
             logging.error("Complete saving data!")
 
     def __is_status_change(self, deviceId, status):
@@ -185,13 +192,23 @@ class DELTA_SA2():
         """
         Check if changing product
         """
-        if self.deviceData[deviceId]["changeProduct"] != changeProduct:
-            logging.error(f"Changing product, previous product: {self.deviceData[deviceId]['changeProduct']} - current product {changeProduct}")
+        now = VnTimeStamps.now()
+        # if self.deviceData[deviceId]["changeProduct"] != changeProduct:
+        #     logging.error(f"Changing product, previous product: {self.deviceData[deviceId]['changeProduct']} - current product {changeProduct}")
+        #     self.deviceData[deviceId]["changeProduct"] = changeProduct
+        #     self.deviceData[deviceId]["runningNumber"] += 1
+        #     return True
+        if self.deviceData[deviceId]["changeProduct"] == 0 and changeProduct == 1:
+            logging.error(f"Start changing product, previous running number: {self.deviceData[deviceId]['runningNumber']}")
             self.deviceData[deviceId]["changeProduct"] = changeProduct
-            self.deviceData[deviceId]["runningNumber"] += 1
             return True
-        return False
-    
+        elif self.deviceData[deviceId]["changeProduct"] == 1 and changeProduct == 0:
+            self.deviceData[deviceId]["runningNumber"] += 1
+            logging.error(f"Stop changing product, current running number: {self.deviceData[deviceId]['runningNumber']} ")
+            self.deviceData[deviceId]["changeProduct"] = changeProduct
+            return True
+        else:
+            return False
     # def __is_ng_change(self, deviceId, ng):
     #     """
     #     Check if ng change
