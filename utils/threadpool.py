@@ -16,7 +16,7 @@ class Worker(Thread):
             try: 
                 func(*args, **kargs)
             except Exception as e: 
-                logging.info(e)
+                logging.error(e)
             self.tasks.task_done()
             # print("done task")
 

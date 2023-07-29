@@ -6,6 +6,7 @@ from sqlalchemy import and_
 from app.machine.plc_delta import DELTA_SA2
 from utils.threadpool import ThreadPool
 from app import redisClient, db
+from rabbit_mq import RabbitMQ
 
 workers = ThreadPool(100)
 
@@ -28,7 +29,7 @@ def start_service(object,configure,redisClient,mqttClient):
     if "humtemprate" not in humTempRate:
         humTempRate = GeneralConfig.DEFAULTRATE 
     else:
-        humTempRate = int(humTempRate)
+        humTempRate = int(humTempRate["humtemprate"])
     workers.add_task(object.start)
     workers.add_task(synchronize_data,mqttClient)
     schedule.every(humTempRate).seconds.do(sync_humidity_temperature, configure, redisClient, mqttClient)
@@ -69,9 +70,10 @@ def synchronize_data(mqttClient):
             # logging.error(e)
             sendData = None
         if sendData:
-            logging.info(sendData)
+            logging.warning(sendData)
             try:
                 mqttClient.publish("stat/V3/" + result.deviceId +"/OEEDATA",json.dumps(sendData))
+                RabbitMQ.getInstance().send_msg(json.dumps(sendData))
                 # logging.error("stat/V3/" + result.deviceId +"/OEEDATA")
                 db.session.query(UnsyncedMachineData).filter_by(timestamp=result.timestamp).delete()
                 db.session.commit()

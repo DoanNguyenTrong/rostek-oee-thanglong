@@ -1,4 +1,4 @@
-from configure import RedisCnf
+from rabbit_mq import RabbitMQ
 from configure import *
 import coloredlogs, os, redis
 from flask import Flask
@@ -9,7 +9,7 @@ import logging
 """
 Configure log
 """
-coloredlogs.install(level='info', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
+coloredlogs.install(level='warning', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
 
 """
 Configure Flask and database
@@ -39,6 +39,6 @@ redisClient = redis.Redis(
         decode_responses = True
     )
 from app.action.service_utils import init_objects
-
+rabitMq = RabbitMQ(RabbitMQCnf.USER,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
 init_objects()
 

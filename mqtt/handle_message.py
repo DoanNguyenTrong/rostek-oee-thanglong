@@ -1,4 +1,4 @@
-from configure import deltaConfigure
+from configure import deltaConfigure, RedisCnf
 import logging
 import json
 import schedule
@@ -10,7 +10,9 @@ def handle_humtemp_rate_data(client,data,redisClient):
     """
     schedule.clear()
     humTempRate = data["rate"]
+    redisClient.hset(RedisCnf.HUMTEMPTOPIC, "humtemprate", humTempRate)
     schedule.every(humTempRate).seconds.do(sync_humidity_temperature, deltaConfigure, redisClient, client)
+    logging.error(f"Scheduled every {humTempRate} secs !")
 
 def handle_request_data(deviceId,data,client):
     """

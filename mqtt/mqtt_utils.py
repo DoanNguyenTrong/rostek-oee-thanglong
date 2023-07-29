@@ -29,7 +29,7 @@ def on_message(client, userdata, message):
     
 def connect(client,broker,port):
     try:
-        logging.info(f"Connecting to broker MQTT: {broker}")
+        logging.warning(f"Connecting to broker MQTT: {broker}")
         client.on_message=on_message
         client.on_connect=on_connect 
         client.on_disconnect=on_disconnect

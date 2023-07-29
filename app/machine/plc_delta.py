@@ -101,7 +101,7 @@ class DELTA_SA2():
                         logging.error(str(e))
                         self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
                     self.__save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
-            time.sleep(GeneralConfig.READINGRATE)
+            # time.sleep(GeneralConfig.READINGRATE)
 
     def __read_modbus_data(self,device,deviceId):
         """

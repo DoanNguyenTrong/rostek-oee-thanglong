@@ -40,6 +40,13 @@ class FLASK(object):
     PORT    = 5103
     DEBUG   = True
 
+
+class RabbitMQCnf(object):
+    USER        = "guest"
+    PASSWORD    = "guest"
+    BROKER      = "172.174.244.95"
+    PORT        = 5672
+
 deltaConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyUSB0",
