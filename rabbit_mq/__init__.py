@@ -87,11 +87,12 @@ class RabbitMQ():
     #     return self.__channel
 
     def disconnect(self):
-        logging.error("Disconnecting to RabbitMQ server")
+        logging.info("Disconnecting to RabbitMQ server...")
         if self.connection and self.connection.is_open:
             self.connection.close()
             logging.debug('Closed connection!')
-
+        else:
+            logging.debug('Connection already disconnected!')
         
     # def connected(self):
     #     return self.__connected
