@@ -29,6 +29,8 @@ class RabbitMQ():
         self.connection     = None
         self.channel        = None
         self.establish_connection_sync()
+        self.channel.queue_declare(queue="gateway_v3")
+        self.channel.queue_declare(queue="oee_statistic")
     
     def establish_connection_sync(self, timesleep=1):
         while True:
@@ -84,12 +86,12 @@ class RabbitMQ():
     # def get_channel(self):
     #     return self.__channel
 
-    # def set_disconnect(self):
-    #     logging.error("Rabbit disconnected")
-    #     self.__connected = False
-    #     if self.__connection and self.__connection.is_open:
-    #         logging.debug('closing queue connection')
-    #         self.__connection.close()
+    def disconnect(self):
+        logging.error("Disconnecting to RabbitMQ server")
+        if self.connection and self.connection.is_open:
+            self.connection.close()
+            logging.debug('Closed connection!')
+
         
     # def connected(self):
     #     return self.__connected
