@@ -71,6 +71,8 @@ class RabbitMQ():
             logging.error(f"Timeout occured for {message!r}")
             self.setup()
             self.send_message(message)
+        except Exception as e:
+            logging.error(f'Unknown exception: {e}')
         else:
             if not isinstance(confirmation, Basic.Ack):
                 logging.debug(f"Message {message!r} was not acknowledged by broker!")
