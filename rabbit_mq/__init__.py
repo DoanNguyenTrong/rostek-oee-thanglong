@@ -33,7 +33,7 @@ class RabbitMQ():
                 self.__connection  = pika.BlockingConnection(pika.ConnectionParameters(host=self.__broker,  port=self.__port,heartbeat=600,credentials=self.__credentials,blocked_connection_timeout=300))
                 self.__channel = self.__connection.channel()
                 self.__channel.queue_declare(queue="gateway_v3")
-                self.__channel.queue_declare(queue="oee_statistic")
+                self.__channel.queue_declare(queue="oee_data")
                 self.__connected    = True
                 self.__reconnecting = False
         except:
