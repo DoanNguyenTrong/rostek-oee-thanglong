@@ -1,4 +1,3 @@
-from rabbit_mq import RabbitMQ
 from configure import *
 import coloredlogs, os, redis
 from flask import Flask
@@ -39,6 +38,5 @@ redisClient = redis.Redis(
         decode_responses = True
     )
 from app.action.service_utils import init_objects
-rabitMq = RabbitMQ(RabbitMQCnf.USER,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
 init_objects()
 

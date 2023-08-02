@@ -15,15 +15,14 @@ def on_connect(client, userdata, flags, rc):
     client.connected_flag       = True
     client.reconnecting_flag    = False
     logging.warning("Connected to broker MQTT")
-    client.subscribe("cmnd/V2/+/humtemprate")
-    client.subscribe("cmnd/V2/+/requestData")
+    client.subscribe("/TLP/Fre")
     
 def on_message(client, userdata, message):
     data    = json.loads(str(message.payload.decode("utf-8")))
     topic   = str(message.topic)
     deviceId = str(topic.split("/")[2])
-    if "/humtemprate" in topic:
-        workers.add_task(handle_humtemp_rate_data,client,data,redisClient)
+    if "/TLP/Fre" in topic:
+        workers.add_task(handle_rate_data,client,data,redisClient)
     elif "/requestData" in topic:
         workers.add_task(handle_request_data,deviceId,data,client)
     

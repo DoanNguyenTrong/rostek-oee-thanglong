@@ -7,27 +7,31 @@ class ModbusCnf(object):
     BAUDRATE    = 9600
 
 class STATUS(object):
-    DISCONNECT = 0
+    DISCONNECT = 3
     RUN        = 1
-    IDLE       = 2
-    ERROR      = 3
+    IDLE       = 0
 
+class PLCCODE(object):
+    NORMAL  = 0
+    ERROR   = 1
 class MQTTCnf(object):
-    BROKER              = "172.174.244.95"
+    BROKER              = "103.1.237.18"
     PORT                = 1883
-    TOPIC               = "stat/V2/DVES_E94F2C/OEEDATA"
-    MQTT_USERNAME       = "rostek"
-    MQTT_PASSWORD       = "rostek2019"
+    PRODUCTIONTOPIC     = "/TLP/Sanluong"
+    QUALITYTOPIC        = "/TLP/Chatluong"
+    MACHINETOPIC        = "/TLP/Thietbi"
+    RATETOPIC           = "/TLP/Fre"
+    RECALLTOPIC         = "/TLP/Recall"
+    MQTT_USERNAME       = "ISIwwwTeam"
+    MQTT_PASSWORD       = "123456"
     MQTT_KEEPALIVE      = 5
     MQTT_TLS_ENABLED    = False
 
 class RedisCnf(object):
-    HOST        = "localhost"
-    PORT        = 6379
-    PASSWORD    = ""
-    SIEMENSINFO = "/info/siemens"
-    DELTAINFO   = "/info/delta"
-    HUMTEMPTOPIC= "/humtemp" 
+    HOST            = "localhost"
+    PORT            = 6379
+    PASSWORD        = ""
+    RATETOPIC       = "/rate" 
 
 class GeneralConfig(object):
     READINGRATE = 0.5
@@ -40,31 +44,62 @@ class FLASK(object):
     PORT    = 5103
     DEBUG   = True
 
-
-class RabbitMQCnf(object):
-    USER        = "guest"
-    PASSWORD    = "guest"
-    BROKER      = "172.174.226.12"
-    PORT        = 5672
-
 deltaConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA4",
         "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
-        "LISTDEVICE"    : [
+        "LISTDEVICE"    : [            
             {
-                "ID"        : "DVES_E94F2H",
+                "ID"        : "SN_UV",
                 "UID"       : 1,
-                "COUNT"     : 12,
+                "COUNT"     : 6,
                 "ADDRESS"   : 4505,
             }
-            # ,
-            # {
-            #     "ID"        : "DVES_E94F2U",
-            #     "UID"       : 1,
-            #     "COUNT"     : 6,
-            #     "ADDRESS"   : 4505,
-            # }
+        ]
+    }
+
+deltaConfigure1 = {
+        "METHOD"        :  "rtu",
+        "PORT"          :  "/dev/ttyAMA3",
+        "TIMEOUT"       :  1,
+        "BAUDRATE"      :  9600,
+        "LISTDEVICE"    : [            
+            {
+                "ID"        : "GL_637CIR",
+                "UID"       : 1,
+                "COUNT"     : 6,
+                "ADDRESS"   : 4505,
+            }
+        ]
+    }
+
+deltaConfigure2 = {
+        "METHOD"        :  "rtu",
+        "PORT"          :  "/dev/ttyAMA2",
+        "TIMEOUT"       :  1,
+        "BAUDRATE"      :  9600,
+        "LISTDEVICE"    : [            
+            {
+                "ID"        : "ACE70CS",
+                "UID"       : 1,
+                "COUNT"     : 6,
+                "ADDRESS"   : 4505,
+            }
+        ]
+    }
+ 
+deltaConfigure3 = {
+        "METHOD"        :  "rtu",
+        "PORT"          :  "/dev/ttyAMA1",
+        "TIMEOUT"       :  1,
+        "BAUDRATE"      :  9600,
+        "LISTDEVICE"    : [            
+            {
+                "ID"        : "MK1060MF",
+                "UID"       : 1,
+                "COUNT"     : 6,
+                "ADDRESS"   : 4505,
+            }
         ]
     }

@@ -3,8 +3,6 @@ import logging, json, struct, time
 import utils.vntime as VnTimeStamps
 from configure import *
 from ..model.data_model import MachineData
-from ..model.unsynced_data import UnsyncedMachineData
-from sqlalchemy.orm import Session
 from app import db
 
 class DELTA_SA2():
@@ -31,7 +29,7 @@ class DELTA_SA2():
         """
         for device in self.__configure["LISTDEVICE"]:
             deviceId    = device["ID"]
-            rawTopic    = "/device/V2/" + device["ID"] + "/raw"
+            rawTopic    = device["ID"] + "/raw"
             deviceData  = self.__redisClient.hgetall(rawTopic)
             self.deviceData[deviceId]               = {}
             self.deviceData[deviceId]["timestamp"]  = int(float(VnTimeStamps.now()))
@@ -94,7 +92,7 @@ class DELTA_SA2():
                 for device in self.__configure["LISTDEVICE"]:
                     deviceId                                = device["ID"]
                     self.deviceData[deviceId]["Device_id"]  = deviceId
-                    rawTopic                                = "/device/V2/" + deviceId + "/raw"
+                    rawTopic                                = deviceId + "/raw"
                     try:
                         self.__read_modbus_data(device,deviceId)
                     except Exception as e:
@@ -148,19 +146,8 @@ class DELTA_SA2():
                 temperature         = temperature,
                 isChanging          = changeProduct
                 )
-            insertUnsyncedData = UnsyncedMachineData(
-                deviceId            = deviceId, 
-                machineStatus       = status,
-                actual              = actual,
-                timestamp           = timeNow,
-                humidity            = humidity,
-                runningNumber       = self.deviceData[deviceId]["runningNumber"],
-                temperature         = temperature,
-                isChanging          = changeProduct
-                )
             try:
                 db.session.add(insertData)
-                db.session.add(insertUnsyncedData)
                 db.session.commit()
                 db.session.close() 
             except:
@@ -193,11 +180,6 @@ class DELTA_SA2():
         Check if changing product
         """
         now = VnTimeStamps.now()
-        # if self.deviceData[deviceId]["changeProduct"] != changeProduct:
-        #     logging.error(f"Changing product, previous product: {self.deviceData[deviceId]['changeProduct']} - current product {changeProduct}")
-        #     self.deviceData[deviceId]["changeProduct"] = changeProduct
-        #     self.deviceData[deviceId]["runningNumber"] += 1
-        #     return True
         if self.deviceData[deviceId]["changeProduct"] == 0 and changeProduct == 1:
             logging.error(f"Start changing product, previous running number: {self.deviceData[deviceId]['runningNumber']}")
             self.deviceData[deviceId]["changeProduct"] = changeProduct
@@ -209,14 +191,6 @@ class DELTA_SA2():
             return True
         else:
             return False
-    # def __is_ng_change(self, deviceId, ng):
-    #     """
-    #     Check if ng change
-    #     """
-    #     if self.deviceData[deviceId]["ng"] != ng:
-    #         self.deviceData[deviceId]["ng"] = ng
-    #         return True
-    #     return False
 
     
 

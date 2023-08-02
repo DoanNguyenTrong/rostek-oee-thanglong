@@ -2,17 +2,27 @@ from configure import deltaConfigure, RedisCnf
 import logging
 import json
 import schedule
-from app.action.service_utils import sync_humidity_temperature, query_data
+from app.action.service_utils import sync_quality_data, query_data, sync_machine_data, sync_production_data
 
-def handle_humtemp_rate_data(client,data,redisClient):
+def handle_rate_data(client,data,redisClient):
     """
-    Handle humidity and temperature refresh data rate
+    Handle refresh data rate
     """
     schedule.clear()
-    humTempRate = data["rate"]
-    redisClient.hset(RedisCnf.HUMTEMPTOPIC, "humtemprate", humTempRate)
-    schedule.every(humTempRate).seconds.do(sync_humidity_temperature, deltaConfigure, redisClient, client)
-    logging.error(f"Scheduled every {humTempRate} secs !")
+    recordType = data["record_type"]
+    if recordType == "sx":
+        redisClient.hset(RedisCnf.RATETOPIC, "production", data["frequency"])
+        schedule.every(data["frequency"]).seconds.do(sync_production_data, deltaConfigure, redisClient, client)
+
+    elif recordType == "cl":
+        redisClient.hset(RedisCnf.RATETOPIC, "quality", data["frequency"])
+        schedule.every(data["frequency"]).seconds.do(sync_quality_data, deltaConfigure, redisClient, client)
+
+    elif recordType == "tb":
+        redisClient.hset(RedisCnf.RATETOPIC, "machine", data["frequency"])
+        schedule.every(data["frequency"]).seconds.do(sync_machine_data, deltaConfigure, redisClient, client)
+
+    logging.error(f"Scheduled every {data['frequency']} secs for {recordType} !")
 
 def handle_request_data(deviceId,data,client):
     """
