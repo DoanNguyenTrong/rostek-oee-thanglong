@@ -38,7 +38,10 @@ redisClient = redis.Redis(
         charset="utf-8",
         decode_responses = True
     )
+
 from app.action.service_utils import init_objects
+
 rabitMq = RabbitMQ(RabbitMQCnf.USER,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
+rabitMq.setup()
 init_objects()
 
