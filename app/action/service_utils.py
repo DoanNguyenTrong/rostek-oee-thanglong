@@ -7,6 +7,7 @@ from app.machine.plc_delta import DELTA_SA2
 from utils.threadpool import ThreadPool
 from app import redisClient, db
 from rabbit_mq import RabbitMQ
+import asyncio
 
 workers = ThreadPool(100)
 
@@ -71,8 +72,8 @@ def synchronize_data(mqttClient):
             logging.warning(sendData)
             try:
                 mqttClient.publish("stat/V3/" + result.deviceId +"/OEEDATA",json.dumps(sendData))
-                
-                state = RabbitMQ.getInstance().send_msgV2(json.dumps(sendData))
+                logging.warning("Sending data to rabbitMQ")
+                state = asyncio.run(RabbitMQ.getInstance().send_msgV2(json.dumps(sendData)))
                 if not state:
                     logging.error("Error in sending data to RabbitMQ")
                     raise Exception("Error in sending data to RabbitMQ")

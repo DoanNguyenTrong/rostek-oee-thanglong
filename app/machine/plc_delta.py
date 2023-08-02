@@ -166,14 +166,14 @@ class DELTA_SA2():
             except:
                 db.session.rollback()
                 db.session.close() 
-            logging.error("Complete saving data!")
+            logging.warning("Complete saving data!")
 
     def __is_status_change(self, deviceId, status):
         """
         Check if machine status change
         """
         if self.deviceData[deviceId]["status"] != status:
-            logging.error(f"Status change, previous status: {self.deviceData[deviceId]['status']} - current status {status}")
+            logging.warning(f"Status change, previous status: {self.deviceData[deviceId]['status']} - current status {status}")
             self.deviceData[deviceId]["status"] = status
             return True
         return False

@@ -13,7 +13,7 @@ class STATUS(object):
     ERROR      = 3
 
 class MQTTCnf(object):
-    BROKER              = "172.174.244.95"
+    BROKER              = "172.174.226.12"
     PORT                = 1883
     TOPIC               = "stat/V2/DVES_E94F2C/OEEDATA"
     MQTT_USERNAME       = "rostek"
@@ -44,12 +44,12 @@ class FLASK(object):
 class RabbitMQCnf(object):
     USER        = "guest"
     PASSWORD    = "guest"
-    BROKER      = "172.174.244.95"
+    BROKER      = "172.174.226.12"
     PORT        = 5672
 
 deltaConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyUSB0",
+        "PORT"          :  "/dev/ttyAMA4",
         "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [
