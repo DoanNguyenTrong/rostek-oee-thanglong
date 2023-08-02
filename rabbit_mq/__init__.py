@@ -7,7 +7,6 @@ from pamqp.commands import Basic
 class RabbitMQ():
     __instance = None
     
-    @staticmethod
     def __new__(cls, *args, **kwargs):
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
@@ -38,6 +37,7 @@ class RabbitMQ():
     
     async def setup(self, routing_key:list=['oee_data']):
         logging.info("Setup RabbitMQ Publisher ....")
+        
         self.connection = await aio_pika.connect_robust(host=self.__broker, 
                                                         port=self.__port, 
                                                         timeout=600, 
