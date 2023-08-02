@@ -2,7 +2,7 @@ from app.model.data_model import MachineData
 import logging, time, json, schedule
 from configure import *
 from sqlalchemy import and_
-from app.machine.plc_delta import DELTA_SA2
+from app.machine.printing_machine import DELTA_SA2
 from utils.threadpool import ThreadPool
 import utils.vntime as VnTimeStamps
 from app import redisClient, db
