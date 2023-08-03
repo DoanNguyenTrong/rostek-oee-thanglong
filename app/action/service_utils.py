@@ -73,10 +73,7 @@ def synchronize_data(mqttClient):
             try:
                 mqttClient.publish("stat/V3/" + result.deviceId +"/OEEDATA",json.dumps(sendData))
                 logging.warning("Sending data to rabbitMQ")
-                state = asyncio.run(RabbitMQ.getInstance().send_msgV2(json.dumps(sendData)))
-                if not state:
-                    logging.error("Error in sending data to RabbitMQ")
-                    raise Exception("Error in sending data to RabbitMQ")
+                RabbitMQ.end_msgV2(json.dumps(sendData))
                 
                 # logging.error("stat/V3/" + result.deviceId +"/OEEDATA")
                 db.session.query(UnsyncedMachineData).filter_by(timestamp=result.timestamp).delete()
