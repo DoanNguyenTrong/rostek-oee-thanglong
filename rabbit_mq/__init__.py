@@ -21,10 +21,10 @@ class RabbitMQ():
     #         logging.warning("Message published but was returned by the server.")
 
     def __init__(self, id, password, broker, port):
-        if RabbitMQ.__instance != None:
-            raise Exception("Do not call __init__(). RabbitMq is a singleton!")
-        else:
-            RabbitMQ.__instance = self
+        # if RabbitMQ.__instance != None:
+        #     raise Exception("Do not call __init__(). RabbitMq is a singleton!")
+        # else:
+        #     RabbitMQ.__instance = self
         
         self.__broker       = broker
         self.__port         = port
@@ -57,6 +57,7 @@ class RabbitMQ():
                            timeout:float=5.0):
         try:
             # Publish a message
+            logging.warning(f'Trigger sending data to {queue_name}')
             message = aio_pika.Message(body=data.encode(),
                                    content_type='text/plain',
                                    delivery_mode=aio_pika.DeliveryMode.PERSISTENT)
@@ -76,6 +77,8 @@ class RabbitMQ():
         else:
             if not isinstance(confirmation, Basic.Ack):
                 logging.debug(f"Message {message!r} was not acknowledged by broker!")
+            else:
+                logging.warning("Message published successfully.")
         
     async def close(self):
         try:
