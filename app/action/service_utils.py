@@ -43,7 +43,7 @@ def start_scheduling_thread():
         schedule.run_pending()
         time.sleep(1)
 
-def synchronize_data(mqttClient):
+async def synchronize_data(mqttClient):
     """
     Go to database named UnsyncedMachineData, get data and publish by MQTT to server 
     """
@@ -74,7 +74,7 @@ def synchronize_data(mqttClient):
                 mqttClient.publish("stat/V3/" + result.deviceId +"/OEEDATA",json.dumps(sendData))
                 
                 logging.warning("Sending data to rabbitMQ")
-                asyncio.run(RabbitMQ.send_message(json.dumps(sendData)))
+                await RabbitMQ.send_message(json.dumps(sendData))
                 
                 # logging.error("stat/V3/" + result.deviceId +"/OEEDATA")
                 db.session.query(UnsyncedMachineData).filter_by(timestamp=result.timestamp).delete()
