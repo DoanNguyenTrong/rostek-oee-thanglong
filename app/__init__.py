@@ -39,6 +39,6 @@ redisClient = redis.Redis(
         decode_responses = True
     )
 from app.action.service_utils import init_objects
-rabitMq = RabbitMQ(RabbitMQCnf.USER,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
-init_objects()
-
+publisher = RabbitMQ(RabbitMQCnf.USER,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
+publisher.setup()
+init_objects(publisher)

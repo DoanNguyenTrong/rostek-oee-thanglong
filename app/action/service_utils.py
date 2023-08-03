@@ -11,15 +11,15 @@ import asyncio
 
 workers = ThreadPool(100)
 
-def init_objects():
+def init_objects(rabbit_publisher:RabbitMQ):
     """
     Create instance of machine object and start related functions
     """
     logging.warning("Starting program")
     plcDelta = DELTA_SA2(redisClient, deltaConfigure)
-    start_service(plcDelta, deltaConfigure, redisClient, mqtt_client)
+    start_service(plcDelta, deltaConfigure, redisClient, mqtt_client, rabbit_publisher)
 
-def start_service(object,configure,redisClient,mqttClient):
+def start_service(object,configure,redisClient,mqttClient, rabbit_publisher:RabbitMQ):
     """
     1. Start scheduling for syncing at default sending rate and scheduling service
     2. Start instance's internal function
@@ -32,7 +32,7 @@ def start_service(object,configure,redisClient,mqttClient):
     else:
         humTempRate = int(humTempRate["humtemprate"])
     workers.add_task(object.start)
-    workers.add_task(synchronize_data,mqttClient)
+    workers.add_task(synchronize_data,mqttClient, rabbit_publisher)
     schedule.every(humTempRate).seconds.do(sync_humidity_temperature, configure, redisClient, mqttClient)
 
 def start_scheduling_thread():
@@ -43,7 +43,7 @@ def start_scheduling_thread():
         schedule.run_pending()
         time.sleep(1)
 
-def synchronize_data(mqttClient):
+def synchronize_data(mqttClient, rabbit_publisher:RabbitMQ):
     """
     Go to database named UnsyncedMachineData, get data and publish by MQTT to server 
     """
@@ -71,17 +71,20 @@ def synchronize_data(mqttClient):
         if sendData:
             logging.warning(sendData)
             try:
+                logging.warning("Sending data to MQTT")
                 mqttClient.publish("stat/V3/" + result.deviceId +"/OEEDATA",json.dumps(sendData))
                 logging.warning("Sending data to rabbitMQ")
-                RabbitMQ.end_msgV2(json.dumps(sendData))
-                
+                rabbit_publisher.send_message(json.dumps(sendData))
+                logging.warning("Sent")
+
                 # logging.error("stat/V3/" + result.deviceId +"/OEEDATA")
                 db.session.query(UnsyncedMachineData).filter_by(timestamp=result.timestamp).delete()
                 db.session.commit()
                 db.session.close()
-                logging.warning("Complete sending")
-            except:
-                pass
+                logging.warning("Complete sending\n\n")
+            except Exception as e:
+                logging.error(e.__str__())
+                
             result = None
             sendData = None
         time.sleep(GeneralConfig.SENDINGRATE)
