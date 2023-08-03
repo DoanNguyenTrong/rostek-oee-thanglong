@@ -5,6 +5,10 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import logging
+from rabbit_mq import RabbitMQ
+import asyncio
+from mqtt import mqtt_client
+
 # logging.basicConfig(filename='logging.log',level=logging.INFO)
 """
 Configure log
@@ -39,9 +43,10 @@ redisClient = redis.Redis(
         decode_responses = True
     )
 
-from app.action.service_utils import init_objects
+from app.action.service_utils import main
 
-rabitMq = RabbitMQ(RabbitMQCnf.USER,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
-rabitMq.setup()
-init_objects()
+rabbit_publisher = RabbitMQ(RabbitMQCnf.USER,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
+asyncio.run(rabbit_publisher.setup())
+
+asyncio.run(main(rabbit_publisher))
 

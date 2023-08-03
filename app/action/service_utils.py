@@ -5,49 +5,85 @@ from configure import *
 from sqlalchemy import and_
 from app.machine.plc_delta import DELTA_SA2
 from utils.threadpool import ThreadPool
-from app import redisClient, db
+from app import redisClient
 from rabbit_mq import RabbitMQ
 import asyncio
 
 workers = ThreadPool(100)
 
-def init_objects():
+# async def main(rabbit_publisher:RabbitMQ):
+#     """
+#     Create instance of machine object and start related functions
+#     """
+#     logging.warning("Starting program")
+#     tasks = []
+#     plcDelta = DELTA_SA2(redisClient, deltaConfigure)
+#     # asyncio.run(start_services(tasks, plcDelta, deltaConfigure, redisClient, mqtt_client, rabbit_publisher))
+    
+#     humTempRate = redisClient.hgetall(RedisCnf.HUMTEMPTOPIC)
+#     if "humtemprate" not in humTempRate:
+#         humTempRate = GeneralConfig.DEFAULTRATE 
+#     else:
+#         humTempRate = int(humTempRate["humtemprate"])
+    
+#     loop = asyncio.get_event_loop()
+#     tasks.append(loop.create_task(plcDelta.start))
+#     await asyncio.sleep(0)
+#     tasks.append( loop.create_task(synchronize_data,mqtt_client, rabbit_publisher) )
+#     await asyncio.sleep(0)
+#     tasks.append( loop.create_task(hum_loop,deltaConfigure, redisClient, mqtt_client, humTempRate) )
+#     await asyncio.sleep(0)
+    
+#     # Run the event loop indefinitely until the task is done
+#     try:
+#         loop.run_forever()
+#     except KeyboardInterrupt:
+#         pass
+#     finally:
+#         loop.close()
+
+async def main(rabbit_publisher: RabbitMQ):
     """
     Create instance of machine object and start related functions
     """
     logging.warning("Starting program")
+    tasks = []
     plcDelta = DELTA_SA2(redisClient, deltaConfigure)
-    start_service(plcDelta, deltaConfigure, redisClient, mqtt_client)
 
-def start_service(object,configure,redisClient,mqttClient):
-    """
-    1. Start scheduling for syncing at default sending rate and scheduling service
-    2. Start instance's internal function
-    3. Start microservice for sending data
-    """
-    workers.add_task(start_scheduling_thread)
     humTempRate = redisClient.hgetall(RedisCnf.HUMTEMPTOPIC)
     if "humtemprate" not in humTempRate:
-        humTempRate = GeneralConfig.DEFAULTRATE 
+        humTempRate = GeneralConfig.DEFAULTRATE
     else:
         humTempRate = int(humTempRate["humtemprate"])
-    workers.add_task(object.start)
-    workers.add_task(synchronize_data,mqttClient)
-    schedule.every(humTempRate).seconds.do(sync_humidity_temperature, configure, redisClient, mqttClient)
 
-def start_scheduling_thread():
+    loop = asyncio.get_event_loop()
+    tasks.append(loop.create_task(plcDelta.start()))  # Call plcDelta.start as a coroutine
+    tasks.append(loop.create_task(synchronize_data(mqtt_client, rabbit_publisher)))  # Call synchronize_data as a coroutine
+    tasks.append(loop.create_task(hum_loop(deltaConfigure, redisClient, mqtt_client, humTempRate)))  # Call hum_loop as a coroutine
+    
+    # Run the event loop until all tasks are done
+    try:
+        for task in tasks:
+            await asyncio.gather(*task)
+    except KeyboardInterrupt:
+        pass
+
+
+async def hum_loop(configure, redisClient, mqttClient, sleeptime:int=1):
     """
     Thread to schedule service
     """
     while True:
-        schedule.run_pending()
-        time.sleep(1)
+        logging.warn("hum_loop()")
+        sync_humidity_temperature(configure, redisClient, mqttClient)
+        time.sleep(sleeptime)
 
-async def synchronize_data(mqttClient):
+async def synchronize_data(mqttClient, rabbit_publisher:RabbitMQ):
     """
     Go to database named UnsyncedMachineData, get data and publish by MQTT to server 
     """
-    while True:   
+    while True:
+        logging.warn("synchronize_data()")
         sendData = None
         # a =  db.session.query(UnsyncedMachineData).all()
         # db.session.close()
@@ -66,23 +102,24 @@ async def synchronize_data(mqttClient):
                 "isChanging"      : result.isChanging
             }
         except Exception as e:
-            # logging.error(e)
+            logging.error(e)
             sendData = None
+        
         if sendData:
             logging.warning(sendData)
             try:
                 mqttClient.publish("stat/V3/" + result.deviceId +"/OEEDATA",json.dumps(sendData))
                 
                 logging.warning("Sending data to rabbitMQ")
-                await RabbitMQ.send_message(json.dumps(sendData))
+                asyncio.run( rabbit_publisher.send_message(json.dumps(sendData)) )
                 
                 # logging.error("stat/V3/" + result.deviceId +"/OEEDATA")
                 db.session.query(UnsyncedMachineData).filter_by(timestamp=result.timestamp).delete()
                 db.session.commit()
                 db.session.close()
                 logging.warning("Complete sending")
-            except:
-                pass
+            except Exception as e:
+                logging.error(e.__str__())
             result = None
             sendData = None
         time.sleep(GeneralConfig.SENDINGRATE)
@@ -100,7 +137,7 @@ def sync_humidity_temperature(configure, redisClient, mqttClient):
             publishData["temperature"]  = data["temperature"]
             publishData["humidity"]     = data["humidity"]
             mqttClient.publish(mqttTopic,json.dumps(publishData))
-            # logging.error("Done syncing")
+            logging.debug("Done syncing")
 
 def query_data(deviceId,timeFrom,timeTo):
     """

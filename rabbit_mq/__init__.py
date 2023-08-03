@@ -40,7 +40,7 @@ class RabbitMQ():
         
         self.connection = await aio_pika.connect_robust(host=self.__broker, 
                                                         port=self.__port, 
-                                                        timeout=600, 
+                                                        # timeout=600, 
                                                         login=self.__id, 
                                                         password=self.__password)
         self.channel    = await self.connection.channel(publisher_confirms=True)

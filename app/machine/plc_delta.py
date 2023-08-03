@@ -16,7 +16,7 @@ class DELTA_SA2():
         self.deviceData             = {}
         self.__get_redis_data()
 
-    def start(self):
+    async def start(self):
         """
         Start function
         """
