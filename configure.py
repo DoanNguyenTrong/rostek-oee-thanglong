@@ -7,18 +7,18 @@ class ModbusCnf(object):
     BAUDRATE    = 9600
 
 class STATUS(object):
-    DISCONNECT = 3
+    DISCONNECT = 0
     RUN        = 1
-    IDLE       = 0
+    IDLE       = 2
+    ERROR      = 3
 
-class PLCCODE(object):
-    NORMAL  = 0
-    ERROR   = 1
 class MQTTCnf(object):
     BROKER              = "103.1.237.18"
     PORT                = 1883
     PRODUCTIONTOPIC     = "/TLP/Sanluong"
     QUALITYTOPIC        = "/TLP/Chatluong"
+    STARTPRODUCTION     = "/TLP/Tinhsanluong"
+    TESTPRODUCTION      = "/TLP/Thunghiem"
     MACHINETOPIC        = "/TLP/Thietbi"
     RATETOPIC           = "/TLP/Fre"
     RECALLTOPIC         = "/TLP/Recall"
@@ -41,10 +41,10 @@ class GeneralConfig(object):
 
 class FLASK(object):
     HOST    = '0.0.0.0'
-    PORT    = 5103
+    PORT    = 5104
     DEBUG   = True
 
-deltaConfigure = {
+uvMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA4",
         "TIMEOUT"       :  1,
@@ -53,28 +53,30 @@ deltaConfigure = {
             {
                 "ID"        : "SN_UV",
                 "UID"       : 1,
-                "COUNT"     : 6,
+                "COUNT"     : 12,
                 "ADDRESS"   : 4505,
             }
         ]
     }
 
-deltaConfigure1 = {
+printingMachineConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA3",
+        "PORT"          :  "/dev/ttyAMA4",
         "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
                 "ID"        : "GL_637CIR",
                 "UID"       : 1,
-                "COUNT"     : 6,
-                "ADDRESS"   : 4505,
+                "COUNT"     : 29,
+                "COUNT1"    : 13,
+                "ADDRESS"   : 4596,
+                "ADDRESS1"  : 4676,
             }
         ]
     }
 
-deltaConfigure2 = {
+boxFoldingMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA2",
         "TIMEOUT"       :  1,
@@ -83,13 +85,15 @@ deltaConfigure2 = {
             {
                 "ID"        : "ACE70CS",
                 "UID"       : 1,
-                "COUNT"     : 6,
-                "ADDRESS"   : 4505,
+                "COUNT"     : 12,
+                "ADDRESS"   : 4596,
+                "COUNT1"    : 12,
+                "ADDRESS1"  : 4676,
             }
         ]
     }
  
-deltaConfigure3 = {
+cuttingMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA1",
         "TIMEOUT"       :  1,
@@ -98,8 +102,10 @@ deltaConfigure3 = {
             {
                 "ID"        : "MK1060MF",
                 "UID"       : 1,
-                "COUNT"     : 6,
-                "ADDRESS"   : 4505,
+                "COUNT"     : 17,
+                "ADDRESS"   : 4596,
             }
         ]
     }
+
+listConfig = [uvMachineConfigure, printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]

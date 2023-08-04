@@ -2,10 +2,13 @@ from app.model.data_model import MachineData
 import logging, time, json, schedule
 from configure import *
 from sqlalchemy import and_
-from app.machine.printing_machine import DELTA_SA2
+from app.machine.printing_machine import PRINTING_MACHINE
+from app.machine.box_folding_machine import BOX_FOLDING_MACHINE
+from app.machine.cutting_machine import CUTTING_MACHINE
+from app.machine.uv_machine import UV_MACHINE
 from utils.threadpool import ThreadPool
 import utils.vntime as VnTimeStamps
-from app import redisClient, db
+from app import redisClient
 
 workers = ThreadPool(100)
 
@@ -14,16 +17,19 @@ def init_objects():
     Create instance of machine object and start related functions
     """
     logging.warning("Starting program")
-    plcDelta = DELTA_SA2(redisClient, deltaConfigure)
-    start_service(plcDelta, deltaConfigure, redisClient, mqtt_client)
+    printingMachine     = PRINTING_MACHINE(redisClient, printingMachineConfigure)
+    boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
+    # cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
+    # uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
+    # start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
+    start_service(printingMachine)
 
-def start_service(object,configure,redisClient,mqttClient):
+def start_service(*args):
     """
     1. Start scheduling for syncing at default sending rate and scheduling service
     2. Start instance's internal function
     3. Start microservice for sending data
     """
-    workers.add_task(start_scheduling_thread)
     rate = redisClient.hgetall(RedisCnf.RATETOPIC)
     if "machine" not in rate:
         machineRate = GeneralConfig.DEFAULTRATE 
@@ -32,17 +38,25 @@ def start_service(object,configure,redisClient,mqttClient):
     if "quality" not in rate:
         qualityRate = GeneralConfig.DEFAULTRATE 
     else:
-        qualityRate = int(rate["qualityrate"])
+        qualityRate = int(rate["quality"])
     if "production" not in rate:
         productionRate = GeneralConfig.DEFAULTRATE 
     else:
-        productionRate = int(rate["productionrate"])
-    workers.add_task(object.start)
-    workers.add_task(sync_production_data,mqttClient)
-    schedule.every(machineRate).seconds.do(sync_machine_data, configure, redisClient, mqttClient)
-    schedule.every(qualityRate).seconds.do(sync_quality_data, configure, redisClient, mqttClient)
-    schedule.every(productionRate).seconds.do(sync_production_data, configure, redisClient, mqttClient)
+        productionRate = int(rate["production"])
 
+    for object in args:
+        workers.add_task(object.start)
+
+    schedule.every(machineRate).seconds.do(sync_machine_data)
+    schedule.every(qualityRate).seconds.do(sync_quality_data)
+    schedule.every(productionRate).seconds.do(sync_production_data)
+#     start_sync_service(machineRate = sync_machine_data, qualityRate = sync_quality_data, productionRate = sync_production_data)
+
+# def start_sync_service(**kwargs):
+#     for rate,service in kwargs:
+#         schedule.every(rate).seconds.do(service)
+#     workers.add_task(start_scheduling_thread)
+    
 def start_scheduling_thread():
     """
     Thread to schedule service
@@ -51,81 +65,83 @@ def start_scheduling_thread():
         schedule.run_pending()
         time.sleep(1)
 
-def sync_production_data(configure, redisClient, mqttClient):
+def sync_production_data():
     """
     Sync production data
     """
     timeNow = int(float(VnTimeStamps.now()))
-    for device in configure["LISTDEVICE"]:
-        data = redisClient.hgetall(device["ID"] + "/raw")
-        if data:
-            sendData = {
-                "record_type"   : "sx",
-                "input"         : data["input"]     if ["input"]    in data else 0,
-                "output"        : data["output"]    if ["output"]   in data else 0,
-                "machine_id"    : device["ID"],
-                "timestamp_PLC" : data["timestamp"],
-                "timestamp_GW"  : timeNow,
-            }
-            logging.warning(sendData)
-            try:
-                mqttClient.publish(MQTTCnf.PRODUCTIONTOPIC, json.dumps(sendData))
-                logging.warning("Complete send production data")
-            except:
-                pass
+    for configure in listConfig:
+        for device in configure["LISTDEVICE"]:
+            data = redisClient.hgetall(device["ID"] + "/raw")
+            if data:
+                sendData = {
+                    "record_type"   : "sx",
+                    "input"         : data["input"]     if "input"    in data else -1,
+                    "output"        : data["output"]    if "output"   in data else -1,
+                    "machine_id"    : device["ID"],
+                    "timestamp"     : timeNow,
+                }
+                logging.warning(sendData)
+                try:
+                    mqtt_client.publish(MQTTCnf.PRODUCTIONTOPIC, json.dumps(sendData))
+                    logging.warning("Complete send production data")
+                except:
+                    pass
             
-def sync_quality_data(configure, redisClient, mqttClient):
+def sync_quality_data():
     """
     Send quality data
     """
     timeNow = int(float(VnTimeStamps.now()))
-    for device in configure["LISTDEVICE"]:
-        data = redisClient.hgetall(device["ID"] + "/raw")
-        if data:
-            sendData = {
-                "record_type"   : "cl",
-                "w_temp"        : data["w_temp"]    if ["w_temp"]   in data else 0,
-                "ph"            : data["ph"]        if ["ph"]       in data else 0,
-                "t_ev"          : data["t_ev"]      if ["t_ev"]     in data else 0,
-                "uv1"           : data["uv1"]       if ["uv1"]      in data else 0,
-                "uv2"           : data["uv2"]       if ["uv2"]      in data else 0,
-                "uv3"           : data["uv3"]       if ["uv3"]      in data else 0,
-                "p_cut"         : data["p_cut"]     if ["p_cut"]    in data else 0,
-                "p_conv"        : data["p_conv"]    if ["p_conv"]   in data else 0,
-                "p_gun"         : data["p_gun"]     if ["p_gun"]    in data else 0,
-                "machine_id"    : device["ID"],
-                "timestamp_PLC" : data["timestamp"],
-                "timestamp_GW"  : timeNow
-            }
-            logging.warning(sendData)
-            try:
-                mqttClient.publish(MQTTCnf.QUALITYTOPIC, json.dumps(sendData))
-                logging.warning("Complete send quality data")
-            except:
-                pass
+    for configure in listConfig:
+        for device in configure["LISTDEVICE"]:
+            data = redisClient.hgetall(device["ID"] + "/raw")
+            if data:
+                sendData = {
+                    "record_type"   : "cl",
+                    "w_temp"        : data["waterTemp"] if "waterTemp"  in data else -1,
+                    "ph"            : data["waterpH"]   if "waterpH"    in data else -1,
+                    "t_ev"          : data["envTemp"]   if "envTemp"    in data else -1,
+                    "e_hum"         : data["envHum"]    if "envHum"     in data else -1,
+                    "uv1"           : data["uv1"]       if "uv1"        in data else -1,
+                    "uv2"           : data["uv2"]       if "uv2"        in data else -1,
+                    "uv3"           : data["uv3"]       if "uv3"        in data else -1,
+                    "p_cut"         : data["p_cut"]     if "p_cut"      in data else -1,
+                    "p_conv1"       : data["p_conv"]    if "p_conv"     in data else -1,
+                    "p_conv2"       : data["p_conv"]    if "p_conv"     in data else -1,
+                    "p_gun"         : data["p_gun"]     if "p_gun"      in data else -1,
+                    "machine_id"    : device["ID"],
+                    "timestamp"  : timeNow
+                }
+                logging.warning(sendData)
+                try:
+                    mqtt_client.publish(MQTTCnf.QUALITYTOPIC, json.dumps(sendData))
+                    logging.warning("Complete send quality data")
+                except:
+                    pass
 
-def sync_machine_data(configure, redisClient, mqttClient):
+def sync_machine_data():
     """
     Send machine data
     """
     timeNow = int(float(VnTimeStamps.now()))
-    for device in configure["LISTDEVICE"]:
-        data = redisClient.hgetall(device["ID"] + "/raw")
-        if data:
-            sendData = {
-                "record_type"   : "tb", 
-                "status"        : data["status"]    if ["status"]   in data else 0,
-                "type"          : data["type"]      if ["type"]     in data else 0,
-                "machine_id"    : device["ID"],
-                "timestamp_PLC" : data["timestamp"],
-                "timestamp_GW"  : timeNow,
-            }
-            logging.warning(sendData)
-            try:
-                mqttClient.publish(MQTTCnf.MACHINETOPIC, json.dumps(sendData))
-                logging.warning("Complete send machine data")
-            except:
-                pass
+    for configure in listConfig:
+        for device in configure["LISTDEVICE"]:
+            data = redisClient.hgetall(device["ID"] + "/raw")
+            if data:
+                sendData = {
+                    "record_type"   : "tb", 
+                    "status"        : data["status"],
+                    "type"          : data["errorCode"],
+                    "machine_id"    : device["ID"],
+                    "timestamp"  : timeNow,
+                }
+                logging.warning(sendData)
+                try:
+                    mqtt_client.publish(MQTTCnf.MACHINETOPIC, json.dumps(sendData))
+                    logging.warning("Complete send machine data")
+                except:
+                    pass
 
 def query_data(deviceId,timeFrom,timeTo):
     """
