@@ -1,11 +1,14 @@
+
+import logging
 from sqlalchemy import Column, Integer, String, Float, Boolean
-from app import db
+
+from app import db_client
 """
 Database for saving events
 TO DO: update auto clean after ... days
 """
 
-class MachineData(db.Model):
+class MachineData(db_client.Model):
     __tablename__ = "Machine Data"
 
     id              = Column("id", Integer, primary_key=True, autoincrement=True)
@@ -19,7 +22,7 @@ class MachineData(db.Model):
     isChanging      = Column("isChanging", Boolean)
 
 
-class UnsyncedMachineData(db.Model):
+class UnsyncedMachineData(db_client.Model):
     """
     Cached database, when sending successful, clear record
     """
@@ -34,3 +37,4 @@ class UnsyncedMachineData(db.Model):
     temperature     = Column("temperature", Float)
     humidity        = Column("humidity", Float)
     isChanging      = Column("isChanging", Boolean)
+

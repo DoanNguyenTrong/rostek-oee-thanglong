@@ -1,8 +1,7 @@
 import logging, time
-import numpy as np
 import paho.mqtt.client as mqtt
+import json
 
-from .handle_message import *
 from configure import MQTTCnf
 
 def mqtt_args_parser(parser):
@@ -76,10 +75,10 @@ def on_message(client, userdata, message):
                                                            message.retain))
     if "/humtemprate" in message_topic:
         redisClient = userdata["redisClient"]
-        handle_humtemp_rate_data(client,received_data,redisClient)
+        # handle_humtemp_rate_data(client,received_data,redisClient)
     elif "/requestData" in message_topic:
         redisClient = userdata["redisClient"]
-        handle_request_data(deviceId,received_data,client)
+        # handle_request_data(deviceId,received_data,client)
     
     if message.retain==1:
         logging.debug("This is a retained message")
@@ -93,6 +92,29 @@ def on_log(client, userdata, level, buf):
     Troubleshoot using Logging
     """
     logging.info("MQTTClient log: ",buf)
+
+def handle_humtemp_rate_data(client,data,redisClient):
+    """
+    Handle humidity and temperature refresh data rate
+    """
+    # schedule.clear()
+    # humTempRate = data["rate"]
+    # redisClient.hset(RedisCnf.HUMTEMPTOPIC, "humtemprate", humTempRate)
+    # schedule.every(humTempRate).seconds.do(sync_humidity_temperature, deltaConfigure, redisClient, client)
+    # logging.error(f"Scheduled every {humTempRate} secs !")
+    logging.error("\nwwwwwwwwwwwwwaaaaaaaaaaaaiiiiiiiiiiiiiii\n")
+
+def handle_request_data(deviceId,data,client):
+    """
+    Handle data request from server
+    """
+    timeFrom    = data["from"]
+    timeTo      = data["to"]
+    # # data = query_data(str(deviceId, timeFrom, timeTo))
+    # client.publish(json.dumps(data))
+
+    logging.error("\nwwwwwwwwwwwwwaaaaaaaaaaaaiiiiiiiiiiiiiii\n")
+
 
 
 class MQTTClient():
@@ -110,20 +132,24 @@ class MQTTClient():
         self.client.on_disconnect = on_disconnect
         self.client.on_message = on_message
         #self.client.on_log        = on_log
-        # username and password
-        if not credential == None:
-            logging.info( "Login a network with credential verification" )
-            try:
-                self.client.username_pw_set(username=credential[0],password=credential[1])
-            except Exception as e:
-                logging.error(e.__str__())
-                logging.error(f"Credential: {credential}")
+        
+        # # username and password
+        # if not credential == None:
+        #     logging.info( "Login a network with credential verification" )
+        #     try:
+        #         self.client.username_pw_set(username=credential[0],password=credential[1])
+        #     except Exception as e:
+        #         logging.error(e.__str__())
+        #         logging.error(f"Credential: {credential}")
     
     def connect(self, keep_alive=True, sleeptime=2):
         """Connect to broker:port"""
-        logging.info("Connecting to broker {}:{}".format(self.broker_ip,self.broker_port))
+        logging.info("Connecting to broker {}:{}".format(self.configures.BROKER_IP,
+                                                         self.configures.PORT))
         try:
-            self.client.connect(self.broker_ip, port=self.broker_port, keepalive=keep_alive) #connect to broker
+            self.client.connect(self.configures.BROKER_IP, 
+                                port=self.configures.PORT, 
+                                keepalive=keep_alive) #connect to broker
             self.client.username_pw_set(username=self.configures.MQTT_USERNAME, 
                                         password=self.configures.MQTT_PASSWORD)
             
@@ -153,7 +179,7 @@ class MQTTClient():
     
     def reconnect(self):
         logging.debug("Reconnecting....")
-        self.connect(self.keepalive, self.username, self.password)
+        self.connect(self.keepalive, self.configures.MQTT_USERNAME, self.configures.MQTT_PASSWORD)
 
     def data_concatenate(self, data):
         """ Concatenate "data" into a single string

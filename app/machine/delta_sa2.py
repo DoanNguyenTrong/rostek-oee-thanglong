@@ -4,9 +4,9 @@ from configure import STATUS
 
 import logging
 import utils.vntime as VnTimeStamps
+from ..model.data_model import MachineData, UnsyncedMachineData
 
-# TODO: need to be updated!
-from ..model.data_model import *
+
 
 class DELTA_SA2_Modbus():
     def __init__(self, configure:dict) -> None:
