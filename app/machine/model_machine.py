@@ -7,30 +7,30 @@ from app import db
 
 class MACHINE():
     def __init__(self,redisClient, configure):
-        self.__redisClient          = redisClient
-        self.__modbusConnection     = False
-        self.__kernelActive         = False
-        self.__configure            = configure
+        self._redisClient          = redisClient
+        self._modbusConnection     = False
+        self._kernelActive         = False
+        self._configure            = configure
         self.deviceData             = {}
-        self.__get_redis_data()
+        self._get_redis_data()
 
     def start(self):
         """
         Start function
         """
-        self.__kernelActive = True
+        self._kernelActive = True
         logging.warning("Init Kernel successful")
-        self.__connect_modbus()
-        self.__start_reading_modbus()
+        self._connect_modbus()
+        self._start_reading_modbus()
        
-    def __get_redis_data(self):
+    def _get_redis_data(self):
         """
         Load old data from redis
         """
-        for device in self.__configure["LISTDEVICE"]:
+        for device in self._configure["LISTDEVICE"]:
             deviceId    = device["ID"]
             rawTopic    = device["ID"] + "/raw"
-            deviceData  = self.__redisClient.hgetall(rawTopic)
+            deviceData  = self._redisClient.hgetall(rawTopic)
             self.deviceData[deviceId]               = {}
             self.deviceData[deviceId]["timestamp"]  = int(float(VnTimeStamps.now()))
             if "runningNumber" not in deviceData:
@@ -38,45 +38,43 @@ class MACHINE():
                 self.deviceData[deviceId]["status"]         = STATUS.DISCONNECT
                 self.deviceData[deviceId]["output"]         = 0
                 self.deviceData[deviceId]["input"]          = 0
-                self.deviceData[deviceId]["ng"]             = 0
                 self.deviceData[deviceId]["changeProduct"]  = 0
                 self.deviceData[deviceId]["errorCode"]      = 0
             else:
                 self.deviceData[deviceId]["runningNumber"]  = int(deviceData["runningNumber"]) 
                 self.deviceData[deviceId]["status"]         = int(deviceData["status"]) 
                 self.deviceData[deviceId]["output"]         = int(deviceData["output"]) 
-                self.deviceData[deviceId]["input"]          = int(deviceData["input"]) 
-                self.deviceData[deviceId]["ng"]             = int(deviceData["ng"]) 
+                self.deviceData[deviceId]["input"]          = int(deviceData["input"])
                 self.deviceData[deviceId]["changeProduct"]  = int(deviceData["changeProduct"])
                 self.deviceData[deviceId]["errorCode"]      = int(deviceData["errorCode"])
 
-    def __connect_modbus(self):
+    def _connect_modbus(self):
         """
         Init MODBUS RTU connection
         """
         try:
-            logging.error(self.__configure)
-            self.__modbusMaster = ModbusSerialClient(
-                method      = self.__configure["METHOD"], 
-                port        = self.__configure["PORT"], 
-                timeout     = self.__configure["TIMEOUT"], 
-                baudrate    = self.__configure["BAUDRATE"]
+            logging.error(self._configure)
+            self._modbusMaster = ModbusSerialClient(
+                method      = self._configure["METHOD"], 
+                port        = self._configure["PORT"], 
+                timeout     = self._configure["TIMEOUT"], 
+                baudrate    = self._configure["BAUDRATE"]
             )
-            self.__modbusMaster.connect()
-            self.__modbusConnection = True
+            self._modbusMaster.connect()
+            self._modbusConnection = True
         except Exception as e:
-            self.__modbusConnection = False
+            self._modbusConnection = False
             logging.error(str(e))
 
-    def __save_raw_data_to_redis(self, topic, data):
+    def _save_raw_data_to_redis(self, topic, data):
         """
         Save raw data to redis
         """
         # logging.info(topic)
         for key in data.keys():
-            self.__redisClient.hset(topic,key ,data[key])
+            self._redisClient.hset(topic,key ,data[key])
 
-    def __parse_register_data(self,c,id1,id2):
+    def _parse_register_data(self,c,id1,id2):
         """
         Parse modbus data
         """
@@ -85,31 +83,32 @@ class MACHINE():
         s = struct.pack(">l", (b<<16)|a)
         return struct.unpack(">l", s)[0]
 
-    def __start_reading_modbus(self):
+    def _start_reading_modbus(self):
         """
         Start reading modbus from device 
         """
-        while self.__kernelActive:
-            if not self.__modbusConnection:
-                self.__connect_modbus()
+        while self._kernelActive:
+            if not self._modbusConnection:
+                self._connect_modbus()
             else:
-                for device in self.__configure["LISTDEVICE"]:
+                for device in self._configure["LISTDEVICE"]:
                     deviceId                                = device["ID"]
                     self.deviceData[deviceId]["Device_id"]  = deviceId
                     rawTopic                                = deviceId + "/raw"
                     try:
-                        self.__read_modbus_data(device,deviceId)
+                        # logging.critical(self._read_modbus_data)
+                        self._read_modbus_data(device,deviceId)
                     except Exception as e:
                         logging.error(str(e))
                         self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
-                    self.__save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
+                    self._save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
             time.sleep(GeneralConfig.READINGRATE)
 
-    def __read_modbus_data(self,device,deviceId):
+    def _read_modbus_data(self,device,deviceId):
         """
         Make request to read modbus and parse data 
         """
-        r = self.__modbusMaster.read_holding_registers(
+        r = self._modbusMaster.read_holding_registers(
             address = device["ADDRESS"], 
             count   = device["COUNT"], 
             unit    = device["UID"]
@@ -137,11 +136,11 @@ class MACHINE():
         changeProduct   = int(registerData[11])
         self.deviceData[deviceId]["temperature"]    = temperature
         self.deviceData[deviceId]["humidity"]       = humidity
-        statusChange    = self.__is_status_change(deviceId,status)
-        outputChange    = self.__is_output_change(deviceId,output)
-        inputChange     = self.__is_input_change(deviceId, input)
-        changingProduct = self.__is_changing_product(deviceId,changeProduct)
-        error           = self.__is_error(deviceId,errorCode)
+        statusChange    = self._is_status_change(deviceId,status)
+        outputChange    = self._is_output_change(deviceId,output)
+        inputChange     = self._is_input_change(deviceId, input)
+        changingProduct = self._is_changing_product(deviceId,changeProduct)
+        error           = self._is_error(deviceId,errorCode)
         # logging.warning(self.deviceData[deviceId])
         if statusChange or outputChange or changingProduct or inputChange or error:
             timeNow = int(float(VnTimeStamps.now()))
@@ -166,7 +165,7 @@ class MACHINE():
             logging.error("Complete saving data!")
 
 
-    def __is_status_change(self, deviceId, status):
+    def _is_status_change(self, deviceId, status):
         """
         Check if machine status change
         """
@@ -176,7 +175,7 @@ class MACHINE():
             return True
         return False
         
-    def __is_output_change(self, deviceId, output):
+    def _is_output_change(self, deviceId, output):
         """
         Check if output change
         """
@@ -186,7 +185,7 @@ class MACHINE():
             return True
         return False
     
-    def __is_input_change(self, deviceId, input):
+    def _is_input_change(self, deviceId, input):
         """
         Check if input change
         """
@@ -196,7 +195,7 @@ class MACHINE():
             return True
         return False
     
-    def __is_changing_product(self, deviceId, changeProduct):
+    def _is_changing_product(self, deviceId, changeProduct):
         """
         Check if changing product
         """
@@ -213,7 +212,7 @@ class MACHINE():
         else:
             return False
 
-    def __is_error(self, deviceId, errorCode):
+    def _is_error(self, deviceId, errorCode):
         """
         Check if error
         """

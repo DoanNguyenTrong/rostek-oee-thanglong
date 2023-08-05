@@ -52,9 +52,9 @@ uvMachineConfigure = {
         "LISTDEVICE"    : [            
             {
                 "ID"        : "SN_UV",
-                "UID"       : 1,
-                "COUNT"     : 12,
-                "ADDRESS"   : 4505,
+                "UID"       : 3,
+                "COUNT"     : 45,
+                "ADDRESS"   : 4596,
             }
         ]
     }

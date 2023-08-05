@@ -17,12 +17,12 @@ def init_objects():
     Create instance of machine object and start related functions
     """
     logging.warning("Starting program")
-    printingMachine     = PRINTING_MACHINE(redisClient, printingMachineConfigure)
-    boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
+    # printingMachine     = PRINTING_MACHINE(redisClient, printingMachineConfigure)
+    # boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
     # cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
-    # uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
+    uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
     # start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
-    start_service(printingMachine)
+    start_service(uvMachine)
 
 def start_service(*args):
     """
@@ -47,9 +47,10 @@ def start_service(*args):
     for object in args:
         workers.add_task(object.start)
 
-    schedule.every(machineRate).seconds.do(sync_machine_data)
+    # schedule.every(machineRate).seconds.do(sync_machine_data)
     schedule.every(qualityRate).seconds.do(sync_quality_data)
-    schedule.every(productionRate).seconds.do(sync_production_data)
+    # schedule.every(productionRate).seconds.do(sync_production_data)
+    workers.add_task(start_scheduling_thread)
 #     start_sync_service(machineRate = sync_machine_data, qualityRate = sync_quality_data, productionRate = sync_production_data)
 
 # def start_sync_service(**kwargs):
