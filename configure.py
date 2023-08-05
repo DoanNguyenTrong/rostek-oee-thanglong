@@ -13,9 +13,10 @@ class STATUS(object):
     ERROR      = 3
 
 class MQTTCnf(object):
-    BROKER              = "172.174.226.12"
+    CLIENT_NAME         = "DVES_E94F2C_OEE_Edge"
+    BROKER_IP              = "172.174.226.12"
     PORT                = 1883
-    TOPIC               = "stat/V2/DVES_E94F2C/OEEDATA"
+    TOPICS               = ["stat/V2/DVES_E94F2C/OEEDATA"]
     MQTT_USERNAME       = "rostek"
     MQTT_PASSWORD       = "rostek2019"
     MQTT_KEEPALIVE      = 5
@@ -42,7 +43,7 @@ class FLASK(object):
 
 
 class RabbitMQCnf(object):
-    USER        = "guest"
+    USER_ID     = "guest"
     PASSWORD    = "guest"
     BROKER      = "172.174.226.12"
     PORT        = 5672

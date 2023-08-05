@@ -1,41 +1,40 @@
 from rabbit_mq import RabbitMQ
-from configure import *
 import coloredlogs, os, redis
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import logging
-from rabbit_mq import RabbitMQ
 import asyncio
-from mqtt import mqtt_client
 
 # logging.basicConfig(filename='logging.log',level=logging.INFO)
 """
 Configure log
 """
-coloredlogs.install(level='warning', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
+coloredlogs.install(level='info', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
+
 
 """
 Configure Flask and database
 """
-APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEMPLATE_PATH = os.path.join(APP_PATH, 'app')
-print(TEMPLATE_PATH)
+DIR_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+APP_PATH = os.path.join(DIR_PATH, 'app')
 
-app = Flask(__name__, template_folder=TEMPLATE_PATH)
+logging.debug(DIR_PATH, APP_PATH)
 
+app = Flask(__name__, template_folder=APP_PATH)
+
+# Flask Cross Origin Resource Sharing
 CORS(app)
-SQL_URI = "sqlite:///"+ APP_PATH +"/"+ GeneralConfig.DATAFILE
+
+# SQL local database
+from configure import GeneralConfig
+SQL_URI = "sqlite:///"+ DIR_PATH +"/"+ GeneralConfig.DATAFILE
 app.config["SQLALCHEMY_DATABASE_URI"] = SQL_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-# app.config['SQLALCHEMY_POOL_SIZE'] = 20
+db_client = SQLAlchemy(app=app)
 
-db=SQLAlchemy(app=app)
-
-"""
-Config redis
-"""
-redisClient = redis.Redis(
+from configure import RedisCnf
+redis_client = redis.Redis(
         host= RedisCnf.HOST,
         port= RedisCnf.PORT, 
         password=  RedisCnf.PASSWORD,
@@ -43,10 +42,29 @@ redisClient = redis.Redis(
         decode_responses = True
     )
 
-from app.action.service_utils import main
+from mqtt.mqtt_client import MQTTClient
+from configure import MQTTCnf
+mqtt_publisher = MQTTClient(MQTTCnf.BROKER_IP,
+                         MQTTCnf.PORT,
+                         client_name="DVES_E94F2C",
+                         mqtt_data={"redisClient": redis_client}
+                         )
 
-rabbit_publisher = RabbitMQ(RabbitMQCnf.USER,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
-asyncio.run(rabbit_publisher.setup())
+from rabbit_mq.rabbit_client import RabbitMQPublisher
+from configure import RabbitMQCnf
+rabbit_publisher = RabbitMQPublisher(RabbitMQCnf.USER_ID,
+                                     RabbitMQCnf.PASSWORD,
+                                     RabbitMQCnf.BROKER,
+                                     RabbitMQCnf.PORT
+                                     )
 
-asyncio.run(main(rabbit_publisher))
+# hardware device
+from machine.delta_sa2 import DELTA_SA2_Modbus, RedisMonitor
+from configure import deltaConfigure, RedisCnf
+plc_modbus  = DELTA_SA2_Modbus(deltaConfigure)
+redis_db_client = RedisMonitor(redis_client=redis_client,
+                               sql_database_client=db_client,
+                               configure=RedisCnf)
 
+from app.main import main
+asyncio.run(main(rabbit_publisher, mqtt_publisher, redis_db_client, db_client, plc_modbus))

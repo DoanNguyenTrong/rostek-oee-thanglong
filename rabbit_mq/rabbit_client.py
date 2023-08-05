@@ -34,7 +34,7 @@ class RabbitMQPublisher():
         self.channel        = None
         self.queues         = []
     
-    async def setup(self, routing_key:list=['oee_data']):
+    async def connect(self, routing_key:list=['oee_data']):
         logging.info("Setup RabbitMQ Publisher ....")
         
         self.connection = await aio_pika.connect_robust(host=self.__broker, 

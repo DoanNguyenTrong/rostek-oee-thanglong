@@ -3,7 +3,7 @@ import numpy as np
 import paho.mqtt.client as mqtt
 
 from .handle_message import *
-
+from configure import MQTTCnf
 
 def mqtt_args_parser(parser):
     """Add parser augument for MQTT options."""
@@ -84,8 +84,6 @@ def on_message(client, userdata, message):
     if message.retain==1:
         logging.debug("This is a retained message")
 
-
-
 def on_publish(client,userdata,result):
     """Callback if a message is publised"""
     logging.info("data published \n")
@@ -98,15 +96,13 @@ def on_log(client, userdata, level, buf):
 
 
 class MQTTClient():
-    def __init__(self, broker_ip:str, broker_port:str, client_name:str, data:dict, credential = None):
-        self.broker_ip = broker_ip
-        self.broker_port = broker_port
-        self.client_name = client_name
-        
-        self.username = None
-        self.password = None
+    def __init__(self, configures:MQTTCnf, user_data:dict, credential = None):
+        self.configures = configures
+        self.user_data = user_data
 
-        self.client = mqtt.Client(client_name, userdata=data)
+        self.keepalive = False
+
+        self.client = mqtt.Client(self.configures.BROKER_IP, userdata=user_data)
         
         # callback functions
         self.client.on_publish    = on_publish
@@ -117,17 +113,20 @@ class MQTTClient():
         # username and password
         if not credential == None:
             logging.info( "Login a network with credential verification" )
-            self.client.username_pw_set(username=credential[0],password=credential[1])
-        
+            try:
+                self.client.username_pw_set(username=credential[0],password=credential[1])
+            except Exception as e:
+                logging.error(e.__str__())
+                logging.error(f"Credential: {credential}")
     
-    def connect(self, keep_alive, username, password, sleeptime=2):
+    def connect(self, keep_alive=True, sleeptime=2):
         """Connect to broker:port"""
         logging.info("Connecting to broker {}:{}".format(self.broker_ip,self.broker_port))
         try:
             self.client.connect(self.broker_ip, port=self.broker_port, keepalive=keep_alive) #connect to broker
-            self.client.username_pw_set(username=username, password=password)
-            self.username = username
-            self.password = password
+            self.client.username_pw_set(username=self.configures.MQTT_USERNAME, 
+                                        password=self.configures.MQTT_PASSWORD)
+            
             self.keepalive = keep_alive
             time.sleep(sleeptime) # Wait for connection setup to complete
         except Exception as e:
@@ -148,7 +147,7 @@ class MQTTClient():
     def publish(self, topic, data, qos = 1, retain=False):
         """Publish "data" -> "topic" """
 
-        logging.info("Publishing message to topic %s" % topic)
+        logging.debug("Publishing message to topic %s" % topic)
         
         self.client.publish(topic, data, qos=qos, retain=retain)
     

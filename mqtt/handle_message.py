@@ -2,7 +2,7 @@ from configure import deltaConfigure, RedisCnf
 import logging
 import json
 import schedule
-from app.action.service_utils import sync_humidity_temperature, query_data
+from app.main import sync_humidity_temperature, query_data
 
 def handle_humtemp_rate_data(client,data,redisClient):
     """

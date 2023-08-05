@@ -80,7 +80,7 @@ class RabbitMQPublisher:
     
 
 async def main():
-    publisher = RabbitMQPublisher(RabbitMQCnf.USER,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
+    publisher = RabbitMQPublisher(RabbitMQCnf.USER_ID,RabbitMQCnf.PASSWORD,RabbitMQCnf.BROKER, RabbitMQCnf.PORT)
     await publisher.setup()
 
     try:
