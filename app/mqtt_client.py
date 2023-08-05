@@ -194,4 +194,3 @@ class MQTTClient():
         data_str += ',' + '\'' + self.client_name + '\''
         data_str += ',' + '\'' + self.sensor_type + '\''
         return data_str
-    

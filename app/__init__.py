@@ -8,7 +8,7 @@ import asyncio
 
 import app.mqtt_client as mqtt_client
 import configure 
-import rabbit_mq.rabbit_client as rabbit_client
+import app.rabbit_client as rabbit_client
 
 # logging.basicConfig(filename='logging.log',level=logging.INFO)
 """

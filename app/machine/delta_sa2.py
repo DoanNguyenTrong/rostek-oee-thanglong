@@ -3,7 +3,7 @@ from pymodbus.client.sync import ModbusSerialClient
 from configure import STATUS
 
 import logging
-import utils.vntime as VnTimeStamps
+from ..utils import vntime as VnTimeStamps
 from ..model.data_model import MachineData, UnsyncedMachineData
 
 
@@ -20,8 +20,14 @@ class DELTA_SA2_Modbus():
         Init MODBUS RTU connection
         """
         try:
-            logging.debug("Configuration: "+ self.configure.__str__())
-            logging.debug("Connecting to modbus..........")
+            logging.critical("Modbus Configuration: "+ self.configure.__str__())
+            logging.critical("Connecting to modbus: method: {},port:{}, timeout: {}, baudrate: {}".format(
+                self.configure["METHOD"],
+                self.configure["PORT"],
+                self.configure["TIMEOUT"],
+                self.configure["BAUDRATE"]
+            ))
+
             self.modbus_client = ModbusSerialClient(
                 method      = self.configure["METHOD"], 
                 port        = self.configure["PORT"], 
@@ -33,66 +39,79 @@ class DELTA_SA2_Modbus():
             self.modbus_connected = True
         except Exception as e:
             self.modbus_connected = False
-            logging.error(e.__str__())
-
+            logging.error("Fatal "+e.__str__())
+        finally:
+            logging.info("Successfully connected!")
     
-    def read_modbus(self) -> dict:
+    def read_modbus(self, captured_data:dict) -> dict:
         """
         Start reading modbus from device 
         """
-        captured_data = {}
-
-        if not self.modbus_connected:
-            self.__connect_modbus()
-        else:
-            for device in self.configure["LISTDEVICE"]:
-                device_id                                = device["ID"]
-                captured_data[device_id]["Device_id"]  = device_id
-                try:
-                    captured_data = self.__read_data(device, device_id, captured_data)
-                    break
-                except Exception as e:
-                    logging.error(e.__str__())
-                    captured_data[device_id]["status"] = STATUS.DISCONNECT
+        logging.debug("Execute: read_modbus()")
+        try:
+            if not self.modbus_connected:
+                self.__connect_modbus()
+            else:
+                for device in self.configure["LISTDEVICE"]:
+                    device_id = device["ID"]
+                    captured_data[device_id]= {}
+                    captured_data[device_id]["Device_id"]= device_id
+                    
+                    try:
+                        captured_data = self.__read_data(device, captured_data)
+                        break
+                    except Exception as e:
+                        logging.error(e.__str__())
+                        captured_data[device_id]["status"] = STATUS.DISCONNECT
+        except Exception as e:
+            logging.error(e.__str__())
         
-        logging.debug(captured_data.__str__())
+        logging.debug("Captured: " + captured_data.__str__())
 
         return captured_data
     
-    def read_data(self,device:str, device_id:str, captured_data:dict):
+    def __read_data(self,device:dict, captured_data:dict):
         """
         Make request to read modbus and parse data 
         """
-        r = self.modbus_client.read_holding_registers(
-            address = device["ADDRESS"], 
-            count   = device["COUNT"], 
-            unit    = device["UID"]
-        )
+        logging.debug("Execute __read_data()")
+        try:
+            logging.debug("Reading! id: {}, address:{}, count:{}, uid:{}".format(device["ID"],
+                                                                                 device["ADDRESS"],
+                                                                                 device["COUNT"], 
+                                                                                 device["UID"]))
+            device_id = device["ID"]
+            r = self.modbus_client.read_holding_registers(
+                address = device["ADDRESS"], 
+                count   = device["COUNT"], 
+                unit    = device["UID"]
+            )
 
-        logging.debug(f"{device['ID']} --- {r}")
-        registerData = r.registers
-        logging.debug(f"Actual - {r.registers[1]}")
-        logging.debug(f"Status - {r.registers[5]}")
-        logging.debug(f"ChangeProduct - {r.registers[11]}")
+            logging.debug(f"{device['ID']} --- {r}")
+            registerData = r.registers
+            logging.debug(f"Actual - {r.registers[1]}")
+            logging.debug(f"Status - {r.registers[5]}")
+            logging.debug(f"ChangeProduct - {r.registers[11]}")
 
-        if int(registerData[5]) == 1:
-            status = STATUS.RUN
-        elif int(registerData[5]) == 2:
-            status = STATUS.IDLE
-        else:
-            status = STATUS.ERROR
+            if int(registerData[5]) == 1:
+                status = STATUS.RUN
+            elif int(registerData[5]) == 2:
+                status = STATUS.IDLE
+            else:
+                status = STATUS.ERROR
 
-        actual          = int(registerData[1])
-        temperature     = float(registerData[5]) # 
-        humidity        = float(registerData[1]) # Fake
-        changeProduct   = int(registerData[11])
+            actual          = int(registerData[1])
+            temperature     = float(registerData[5]) # 
+            humidity        = float(registerData[1]) # Fake
+            changeProduct   = int(registerData[11])
 
-        captured_data[device_id]["temperature"]    = temperature
-        captured_data[device_id]["humidity"]       = humidity
-        captured_data[device_id]["change_product"] = changeProduct
-        captured_data[device_id]["actual"]         = actual
-        captured_data[device_id]["status"]         = status
-
+            captured_data[device_id]["temperature"]    = temperature
+            captured_data[device_id]["humidity"]       = humidity
+            captured_data[device_id]["change_product"] = changeProduct
+            captured_data[device_id]["actual"]         = actual
+            captured_data[device_id]["status"]         = status
+        except Exception as e:
+            logging.error("Fatal! " + e.__str__())
         return captured_data
     
 class RedisMonitor():
@@ -106,11 +125,13 @@ class RedisMonitor():
         Load old data from redis
         """
         latest_data = dict()
+        logging.debug("Execute: get_redis_data()")
 
         for device in self.configure["LISTDEVICE"]:
             device_id    = device["ID"]
             # rawTopic    = "/device/V2/" + device["ID"] + "/raw"
             # TODO: why read all, can be the latest only?
+            logging.debug(f"Query Redis topic:{topic}")
             redis_data  = self.redis_client.hgetall(topic)
 
             latest_data[device_id]               = {}
@@ -128,10 +149,10 @@ class RedisMonitor():
                 latest_data[device_id]["actual"]         = int(redis_data["actual"]) 
                 latest_data[device_id]["ng"]             = int(redis_data["ng"]) 
                 latest_data[device_id]["changeProduct"]  = int(redis_data["changeProduct"])
-        
+        logging.debug(f"Redis data: {latest_data}")
         return latest_data
     
-    def compare_and_save(self, device_id, redis_data:dict, current_data:dict, sql_database_client):
+    def compare_and_save(self, device_id, redis_data:dict, current_data:dict):
         
         status_changed    = self.__is_status_change(redis_data,current_data["status"])
         actual_changed    = self.__is_actual_change(redis_data, current_data["actual"])

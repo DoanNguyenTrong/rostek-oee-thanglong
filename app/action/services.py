@@ -5,7 +5,7 @@ import asyncio
 
 import app.mqtt_client as mqtt_client
 import configure 
-import rabbit_mq.rabbit_client as rabbit_client
+import app.rabbit_client as rabbit_client
 import app.machine.delta_sa2 as devices
 from flask_sqlalchemy import SQLAlchemy
 
@@ -17,7 +17,7 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
     """
     Create instance of machine object and start related functions
     """
-    logging.debug("Starting program ...")
+    logging.info("Starting program ...")
     
     mqtt_publisher.connect(keep_alive=True)
     await rabbit_publisher.connect(routing_key=['oee_data'])
@@ -30,15 +30,18 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
 
     try:
         while True:
-            publish_task = synchronize_data(rabbit_publisher, 
-                                   mqtt_publisher, 
-                                   redis_db_client, 
-                                   db_client, 
-                                   plc_modbus)
-            monitor_task = capture_store_data(redis_db_client,
+            # publish_task = synchronize_data(rabbit_publisher, 
+            #                        mqtt_publisher, 
+            #                        redis_db_client, 
+            #                        db_client, 
+            #                        plc_modbus)
+            # monitor_task = capture_store_data(redis_db_client,
+            #                          db_client,
+            #                          plc_modbus)
+            # await asyncio.gather(publish_task, monitor_task)
+            await capture_store_data(redis_db_client,
                                      db_client,
                                      plc_modbus)
-            await asyncio.gather(publish_task, monitor_task)
 
     except KeyboardInterrupt:
         print("KeyboardInterrupt received. Closing the publisher...")
@@ -48,13 +51,16 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
 async def capture_store_data(redis_db_client:devices.RedisMonitor,
                              sql_client:SQLAlchemy,
                              plc_modbus:devices.DELTA_SA2_Modbus):
+    logging.info("Execute capture_store_data()")
     
     for device in plc_modbus.configure["LISTDEVICE"]:
         try:
-            captured_data = dict()
-            current_data = plc_modbus.read_data(device, device["ID"], captured_data)
-            
+            logging.debug(device)
             redis_topic_name    = "/device/V2/" + device["ID"] + "/raw"
+            logging.debug(f"Topic name: {redis_topic_name}")
+            current_data = dict()
+            current_data = plc_modbus.read_modbus(current_data)
+            
             latest_data = redis_db_client.get_redis_data(redis_topic_name)
             redis_db_client.compare_and_save(device["ID"], 
                                             latest_data, 
@@ -70,7 +76,7 @@ async def synchronize_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            sql_client:SQLAlchemy,
                            plc_modbus:devices.DELTA_SA2_Modbus):
     
-    logging.debug("Execute synchronize_data()")
+    logging.info("Execute synchronize_data()")
     data_tobe_sent = None
     try:
 
