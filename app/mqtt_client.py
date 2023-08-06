@@ -60,7 +60,7 @@ class MQTTClient():
 
         self.keepalive = False
 
-        self.client = mqtt.Client(self.configures.BROKER_IP, userdata=user_data)
+        self.client = mqtt.Client(self.configures.BROKER_IP, userdata=user_data, clean_session=False, reconnect_on_failure=True)
         self.client.username_pw_set(username=self.configures.MQTT_USERNAME, 
                                         password=self.configures.MQTT_PASSWORD)
         
@@ -93,7 +93,8 @@ class MQTTClient():
             self.client.on_message = self.on_message
             self.client.on_subscribe = self.on_subscribe
             self.client.on_disconnect = self.on_disconnect
-            
+            self.client.on_log = self.on_log
+
             self.client.loop_start()
             time.sleep(sleeptime) # Wait for connection setup to complete
         except Exception as e:
@@ -160,7 +161,7 @@ class MQTTClient():
             logging.info("Bad connection Returned code: %s \n"%rc)
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
-        logging.debug(f"Subscribed to topic with MID:{mid}, {granted_qos}")
+        logging.critical(f"Subscribed to topic with MID:{mid}, {granted_qos}")
 
     def on_disconnect(self, client, userdata, rc):
         """Callback function when disconnection"""
@@ -229,4 +230,4 @@ class MQTTClient():
         """
         Troubleshoot using Logging
         """
-        logging.info("MQTTClient log: ",buf)
+        logging.info(f"MQTTClient log: {buf}")
