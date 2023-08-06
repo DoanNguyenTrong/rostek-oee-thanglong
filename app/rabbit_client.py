@@ -64,7 +64,7 @@ class RabbitMQPublisher():
         try:
             send_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             # Publish a message
-            logging.warning(f'{send_time} Trigger sending data to {queue_name}')
+            logging.debug(f'{send_time} Trigger sending data to {queue_name}')
             message = aio_pika.Message(body=data.encode('utf-8'),
                                    content_type='text/plain',
                                    delivery_mode=aio_pika.DeliveryMode.PERSISTENT)
@@ -85,7 +85,7 @@ class RabbitMQPublisher():
                 logging.debug(f"Message {message!r} was not acknowledged by broker!")
             else:
                 success_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                logging.warning(f"{success_time} Message published successfully.{confirm}")
+                logging.warning(f"{success_time} Message published successfully.{confirmation}")
         
     async def close(self):
         try:

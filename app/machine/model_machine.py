@@ -1,0 +1,190 @@
+from pymodbus.client.sync import ModbusSerialClient
+import logging, json, struct, time
+import utils.vntime as VnTimeStamps
+from configure import *
+from ..model.data_model import MachineData
+from app import db
+
+class BaseMachine():
+    def __init__(self, configure:dict) -> None:
+        self.configure = configure
+        self.modbus_client = None
+        self.modbus_connected = False
+        self.__connect_modbus()
+
+    def _connect_modbus(self):
+        """
+        Init MODBUS RTU connection
+        """
+        try:
+            logging.error(self._configure)
+            self._modbusMaster = ModbusSerialClient(
+                method      = self._configure["METHOD"], 
+                port        = self._configure["PORT"], 
+                timeout     = self._configure["TIMEOUT"], 
+                baudrate    = self._configure["BAUDRATE"]
+            )
+            self._modbusMaster.connect()
+            self._modbusConnection = True
+        except Exception as e:
+            self._modbusConnection = False
+            logging.error(str(e))
+
+
+    # def _save_raw_data_to_redis(self, topic, data):
+    #     """
+    #     Save raw data to redis
+    #     """
+    #     # logging.info(topic)
+    #     for key in data.keys():
+    #         self._redisClient.hset(topic,key ,data[key])
+
+    def _parse_register_data(self,c,id1,id2):
+        """
+        Parse modbus data
+        """
+        a = c[id1]
+        b = c[id2]
+        s = struct.pack(">l", (b<<16)|a)
+        return struct.unpack(">l", s)[0]
+
+    def _start_reading_modbus(self):
+        """
+        Start reading modbus from device 
+        """
+        while self._kernelActive:
+            if not self._modbusConnection:
+                self._connect_modbus()
+            else:
+                for device in self._configure["LISTDEVICE"]:
+                    deviceId                                = device["ID"]
+                    self.deviceData[deviceId]["Device_id"]  = deviceId
+                    rawTopic                                = deviceId + "/raw"
+                    try:
+                        # logging.critical(self._read_modbus_data)
+                        self._read_modbus_data(device,deviceId)
+                    except Exception as e:
+                        logging.error(str(e))
+                        self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
+                    self._save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
+            time.sleep(GeneralConfig.READINGRATE)
+
+    def _read_modbus_data(self,device,deviceId):
+        """
+        Make request to read modbus and parse data 
+        """
+        r = self._modbusMaster.read_holding_registers(
+            address = device["ADDRESS"], 
+            count   = device["COUNT"], 
+            unit    = device["UID"]
+        )
+        # logging.warning(f"{device['ID']} --- {r}")
+        registerData = r.registers
+        # logging.error(f"output - {r.registers[1]}")
+        # logging.error(f"Status - {r.registers[5]}")
+        # logging.error(f"ChangeProduct - {r.registers[11]}")
+        if int(registerData[5]) == 1:
+            status = STATUS.RUN
+        elif int(registerData[5]) == 2:
+            status = STATUS.IDLE
+        else:
+            status = STATUS.ERROR
+
+        if int(registerData[5]) == 1:
+            errorCode = 1
+        else:
+            errorCode = 0
+        input           = int(registerData[1])
+        output          = int(registerData[1])
+        temperature     = float(registerData[5])
+        humidity        = float(registerData[1])
+        changeProduct   = int(registerData[11])
+        self.deviceData[deviceId]["temperature"]    = temperature
+        self.deviceData[deviceId]["humidity"]       = humidity
+        statusChange    = self._is_status_change(deviceId,status)
+        outputChange    = self._is_output_change(deviceId,output)
+        inputChange     = self._is_input_change(deviceId, input)
+        changingProduct = self._is_changing_product(deviceId,changeProduct)
+        error           = self._is_error(deviceId,errorCode)
+        
+        # logging.warning(self.deviceData[deviceId])
+        if statusChange or outputChange or changingProduct or inputChange or error:
+            timeNow = int(float(VnTimeStamps.now()))
+            self.deviceData[deviceId]["timestamp"]  = timeNow
+            insertData = MachineData(
+                deviceId            = deviceId, 
+                machineStatus       = status,
+                output              = output,
+                timestamp           = timeNow,
+                humidity            = humidity,
+                runningNumber       = self.deviceData[deviceId]["runningNumber"],
+                temperature         = temperature,
+                isChanging          = changeProduct
+                )
+            try:
+                db.session.add(insertData)
+                db.session.commit()
+                db.session.close() 
+            except:
+                db.session.rollback()
+                db.session.close() 
+            logging.error("Complete saving data!")
+
+
+    def _is_status_change(self, deviceId, status):
+        """
+        Check if machine status change
+        """
+        if self.deviceData[deviceId]["status"] != status:
+            logging.error(f"Status change, previous status: {self.deviceData[deviceId]['status']} - current status {status}")
+            self.deviceData[deviceId]["status"] = status
+            return True
+        return False
+        
+    def _is_output_change(self, deviceId, output):
+        """
+        Check if output change
+        """
+        if self.deviceData[deviceId]["output"] != output:
+            logging.error(f"output change, previous output: {self.deviceData[deviceId]['output']} - current output {output}")
+            self.deviceData[deviceId]["output"] = output
+            return True
+        return False
+    
+    def _is_input_change(self, deviceId, input):
+        """
+        Check if input change
+        """
+        if self.deviceData[deviceId]["input"] != input:
+            logging.error(f"input change, previous input: {self.deviceData[deviceId]['input']} - current input {input}")
+            self.deviceData[deviceId]["input"] = input
+            return True
+        return False
+    
+    def _is_changing_product(self, deviceId, changeProduct):
+        """
+        Check if changing product
+        """
+        now = VnTimeStamps.now()
+        if self.deviceData[deviceId]["changeProduct"] == 0 and changeProduct == 1:
+            logging.error(f"Start changing product, previous running number: {self.deviceData[deviceId]['runningNumber']}")
+            self.deviceData[deviceId]["changeProduct"] = changeProduct
+            return True
+        elif self.deviceData[deviceId]["changeProduct"] == 1 and changeProduct == 0:
+            self.deviceData[deviceId]["runningNumber"] += 1
+            logging.error(f"Stop changing product, current running number: {self.deviceData[deviceId]['runningNumber']} ")
+            self.deviceData[deviceId]["changeProduct"] = changeProduct
+            return True
+        else:
+            return False
+
+    def _is_error(self, deviceId, errorCode):
+        """
+        Check if error
+        """
+        if self.deviceData[deviceId]["errorCode"] != errorCode:
+            logging.error(f"Error code change, previous errorCode: {self.deviceData[deviceId]['errorCode']} - current Error code {errorCode}")
+            self.deviceData[deviceId]["errorCode"] = errorCode
+            return True
+        return False
+    

@@ -12,60 +12,107 @@ class STATUS(object):
     IDLE       = 2
     ERROR      = 3
 
-class MQTTCnf(object):
-    CLIENT_NAME         = "DVES_E94F2C_OEE_Edge"
-    BROKER_IP              = "172.174.226.12"
-    PORT                = 1883
-    TOPICS               = ["stat/V2/DVES_E94F2C/OEEDATA"]
-    MQTT_USERNAME       = "rostek"
-    MQTT_PASSWORD       = "rostek2019"
-    MQTT_KEEPALIVE      = 5
-    MQTT_TLS_ENABLED    = False
-
-class RedisCnf(object):
-    HOST        = "localhost"
-    PORT        = 6379
-    PASSWORD    = ""
-    SIEMENSINFO = "/info/siemens"
-    DELTAINFO   = "/info/delta"
-    HUMTEMPTOPIC= "/humtemp" 
-
-class GeneralConfig(object):
-    READINGRATE = 1
-    SENDINGRATE = 1
-    DEFAULTRATE = 5
-    DATAFILE    = "data.db"
-
-class FLASK(object):
-    HOST    = '0.0.0.0'
-    PORT    = 5103
-    DEBUG   = True
-
-
 class RabbitMQCnf(object):
     USER_ID     = "guest"
     PASSWORD    = "guest"
     BROKER      = "172.174.226.12"
     PORT        = 5672
 
-deltaConfigure = {
+class MQTTCnf(object):
+    BROKER_IP              = "103.1.237.18"
+    PORT                = 1883
+    PRODUCTIONTOPIC     = "/TLP/Sanluong"
+    QUALITYTOPIC        = "/TLP/Chatluong"
+    STARTPRODUCTION     = "/TLP/Tinhsanluong"
+    TESTPRODUCTION      = "/TLP/Thunghiem"
+    MACHINETOPIC        = "/TLP/Thietbi"
+    RATETOPIC           = "/TLP/Fre"
+    RECALLTOPIC         = "/TLP/Recall"
+    MQTT_USERNAME       = "ISIwwwTeam"
+    MQTT_PASSWORD       = "123456"
+    MQTT_KEEPALIVE      = 5
+    MQTT_TLS_ENABLED    = False
+
+class RedisCnf(object):
+    HOST            = "localhost"
+    PORT            = 6379
+    PASSWORD        = ""
+    RATETOPIC       = "/rate" 
+
+class GeneralConfig(object):
+    READINGRATE = 0.5
+    SENDINGRATE = 1
+    DEFAULTRATE = 5
+    DATAFILE    = "data.db"
+
+class FLASK(object):
+    HOST    = '0.0.0.0'
+    PORT    = 5104
+    DEBUG   = True
+
+uvMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA4",
         "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
-        "LISTDEVICE"    : [
+        "LISTDEVICE"    : [            
             {
-                "ID"        : "DVES_E94F2H",
-                "UID"       : 1,
-                "COUNT"     : 12,
-                "ADDRESS"   : 4505,
+                "ID"        : "SN_UV",
+                "UID"       : 3,
+                "COUNT"     : 45,
+                "ADDRESS"   : 4596,
             }
-            # ,
-            # {
-            #     "ID"        : "DVES_E94F2U",
-            #     "UID"       : 1,
-            #     "COUNT"     : 6,
-            #     "ADDRESS"   : 4505,
-            # }
         ]
     }
+
+printingMachineConfigure = {
+        "METHOD"        :  "rtu",
+        "PORT"          :  "/dev/ttyAMA4",
+        "TIMEOUT"       :  1,
+        "BAUDRATE"      :  9600,
+        "LISTDEVICE"    : [            
+            {
+                "ID"        : "GL_637CIR",
+                "UID"       : 1,
+                "COUNT"     : 29,
+                "COUNT1"    : 13,
+                "ADDRESS"   : 4596,
+                "ADDRESS1"  : 4676,
+            }
+        ]
+    }
+
+boxFoldingMachineConfigure = {
+        "METHOD"        :  "rtu",
+        "PORT"          :  "/dev/ttyAMA2",
+        "TIMEOUT"       :  1,
+        "BAUDRATE"      :  9600,
+        "LISTDEVICE"    : [            
+            {
+                "ID"        : "ACE70CS",
+                "UID"       : 1,
+                "COUNT"     : 12,
+                "ADDRESS"   : 4596,
+                "COUNT1"    : 12,
+                "ADDRESS1"  : 4676,
+            }
+        ]
+    }
+ 
+cuttingMachineConfigure = {
+        "METHOD"        :  "rtu",
+        "PORT"          :  "/dev/ttyAMA1",
+        "TIMEOUT"       :  1,
+        "BAUDRATE"      :  9600,
+        "LISTDEVICE"    : [            
+            {
+                "ID"        : "MK1060MF",
+                "UID"       : 1,
+                "COUNT"     : 17,
+                "ADDRESS"   : 4596,
+            }
+        ]
+    }
+
+listConfig = [uvMachineConfigure]
+# , printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]

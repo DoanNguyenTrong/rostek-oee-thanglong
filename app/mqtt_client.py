@@ -70,10 +70,19 @@ def on_message(client, userdata, message):
     received_data    = json.loads(str(message.payload.decode("utf-8")))
     message_topic   = str(message.topic)
     deviceId = str(message_topic.split("/")[2]) 
+
+    topic   = str(message.topic)
+    deviceId = str(topic.split("/")[2])
     logging.info("Topic: {}, msg: {}, retained: {}".format(message_topic, \
                                                            message.payload.decode("utf-8"), \
                                                            message.retain))
-    if "/humtemprate" in message_topic:
+    if "/TLP/Fre" in topic:
+        redisClient = userdata["redisClient"]
+        # handle_rate_data(client,received_data,redisClient)
+    elif "/requestData" in topic:
+        redisClient = userdata["redisClient"]
+        # handle_request_data(deviceId,received_data,client)
+    elif "/humtemprate" in message_topic:
         redisClient = userdata["redisClient"]
         # handle_humtemp_rate_data(client,received_data,redisClient)
     elif "/requestData" in message_topic:
@@ -85,7 +94,8 @@ def on_message(client, userdata, message):
 
 def on_publish(client,userdata,result):
     """Callback if a message is publised"""
-    logging.info("data published \n")
+    logging.debug(f"Message published with result:{result}")
+    logging.debug(f"data published to {userdata['topic']}\n")
 
 def on_log(client, userdata, level, buf):
     """
@@ -114,7 +124,6 @@ def handle_request_data(deviceId,data,client):
     # client.publish(json.dumps(data))
 
     logging.error("\nwwwwwwwwwwwwwaaaaaaaaaaaaiiiiiiiiiiiiiii\n")
-
 
 
 class MQTTClient():
@@ -174,8 +183,11 @@ class MQTTClient():
         """Publish "data" -> "topic" """
 
         logging.debug("Publishing message to topic %s" % topic)
-        
-        self.client.publish(topic, data, qos=qos, retain=retain)
+        self.user_data['topic'] = topic
+        self.client.user_data_set(self.user_data)
+        result, mid = self.client.publish(topic, data, qos=qos, retain=retain)
+        # logging.debug(f"Result:{result}")
+        # logging.debug(f"Result:{mid}")
     
     def reconnect(self):
         logging.debug("Reconnecting....")
