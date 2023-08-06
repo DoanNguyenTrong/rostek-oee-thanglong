@@ -7,11 +7,11 @@ from app import db
 from .model_machine import MACHINE
 
 class CUTTING_MACHINE(MACHINE):
-    def __read_modbus_data(self,device,deviceId):
+    def _read_modbus_data(self,device,deviceId):
         """
         Make request to read modbus and parse data 
         """
-        r = self.__modbusMaster.read_holding_registers(
+        r = self._modbusMaster.read_holding_registers(
             address = device["ADDRESS"], 
             count   = device["COUNT"], 
             unit    = device["UID"]
@@ -37,11 +37,11 @@ class CUTTING_MACHINE(MACHINE):
         output          = int(registerData[4])
         changeProduct   = int(registerData[8])
         
-        statusChange    = self.__is_status_change(deviceId,status)
-        outputChange    = self.__is_output_change(deviceId,output)
-        inputChange     = self.__is_input_change(deviceId, input)
-        changingProduct = self.__is_changing_product(deviceId,changeProduct)
-        error           = self.__is_error(deviceId,errorCode)
+        statusChange    = self._is_status_change(deviceId,status)
+        outputChange    = self._is_output_change(deviceId,output)
+        inputChange     = self._is_input_change(deviceId, input)
+        changingProduct = self._is_changing_product(deviceId,changeProduct)
+        error           = self._is_error(deviceId,errorCode)
 
         # logging.warning(self.deviceData[deviceId])
         if statusChange or outputChange or changingProduct or inputChange or error:
@@ -52,7 +52,6 @@ class CUTTING_MACHINE(MACHINE):
                 machineStatus       = status,
                 output              = output,
                 input               = input,
-                runningNumber       = self.deviceData[deviceId]["runningNumber"],
                 errorCode           = errorCode,
                 envTemp             = -1,
                 envHum              = -1,

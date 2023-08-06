@@ -15,13 +15,13 @@ class STATUS(object):
 class MQTTCnf(object):
     BROKER              = "103.1.237.18"
     PORT                = 1883
-    PRODUCTIONTOPIC     = "/TLP/Sanluong"
-    QUALITYTOPIC        = "/TLP/Chatluong"
-    STARTPRODUCTION     = "/TLP/Tinhsanluong"
-    TESTPRODUCTION      = "/TLP/Thunghiem"
-    MACHINETOPIC        = "/TLP/Thietbi"
-    RATETOPIC           = "/TLP/Fre"
-    RECALLTOPIC         = "/TLP/Recall"
+    PRODUCTIONTOPIC     = "TLP/Sanluong"
+    QUALITYTOPIC        = "TLP/Chatluong"
+    STARTPRODUCTION     = "TLP/Tinhsanluong"
+    TESTPRODUCTION      = "TLP/Thunghiem"
+    MACHINETOPIC        = "TLP/Thietbi"
+    RATETOPIC           = "TLP/Fre"
+    RECALLTOPIC         = "TLP/Recall"
     MQTT_USERNAME       = "ISIwwwTeam"
     MQTT_PASSWORD       = "123456"
     MQTT_KEEPALIVE      = 5

@@ -33,15 +33,13 @@ class MACHINE():
             deviceData  = self._redisClient.hgetall(rawTopic)
             self.deviceData[deviceId]               = {}
             self.deviceData[deviceId]["timestamp"]  = int(float(VnTimeStamps.now()))
-            if "runningNumber" not in deviceData:
-                self.deviceData[deviceId]["runningNumber"]  = 0
+            if "input" not in deviceData:
                 self.deviceData[deviceId]["status"]         = STATUS.DISCONNECT
                 self.deviceData[deviceId]["output"]         = 0
                 self.deviceData[deviceId]["input"]          = 0
                 self.deviceData[deviceId]["changeProduct"]  = 0
                 self.deviceData[deviceId]["errorCode"]      = 0
             else:
-                self.deviceData[deviceId]["runningNumber"]  = int(deviceData["runningNumber"]) 
                 self.deviceData[deviceId]["status"]         = int(deviceData["status"]) 
                 self.deviceData[deviceId]["output"]         = int(deviceData["output"]) 
                 self.deviceData[deviceId]["input"]          = int(deviceData["input"])
@@ -151,7 +149,6 @@ class MACHINE():
                 output              = output,
                 timestamp           = timeNow,
                 humidity            = humidity,
-                runningNumber       = self.deviceData[deviceId]["runningNumber"],
                 temperature         = temperature,
                 isChanging          = changeProduct
                 )
@@ -201,13 +198,14 @@ class MACHINE():
         """
         now = VnTimeStamps.now()
         if self.deviceData[deviceId]["changeProduct"] == 0 and changeProduct == 1:
-            logging.error(f"Start changing product, previous running number: {self.deviceData[deviceId]['runningNumber']}")
+            logging.error("Start changing product")
             self.deviceData[deviceId]["changeProduct"] = changeProduct
             return True
         elif self.deviceData[deviceId]["changeProduct"] == 1 and changeProduct == 0:
-            self.deviceData[deviceId]["runningNumber"] += 1
-            logging.error(f"Stop changing product, current running number: {self.deviceData[deviceId]['runningNumber']} ")
+            logging.error(f"Stop changing product")
             self.deviceData[deviceId]["changeProduct"] = changeProduct
+            from mqtt import mqtt_client
+            mqtt_client.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
             return True
         else:
             return False
@@ -222,5 +220,9 @@ class MACHINE():
             return True
         return False
     
-
-
+    def _generate_start_production_msg(self, deviceId, now):
+        return {
+            "record_type"   : "tsl",
+            "machine_id"    : deviceId,
+            "timestamp"     : now
+        }

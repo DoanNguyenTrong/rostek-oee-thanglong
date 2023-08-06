@@ -13,7 +13,6 @@ class MachineData(db.Model):
     errorCode           = Column("errorCode", Integer, nullable=False)
     output              = Column("output", Integer, nullable=False)
     input               = Column("input", Integer, nullable=False)
-    runningNumber       = Column("runningNumber", Integer, nullable=False)
     envTemp             = Column("envTemp", Float)
     envHum              = Column("envHum", Float)
     waterTemp           = Column("waterTemp", Float)

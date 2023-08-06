@@ -47,9 +47,9 @@ def start_service(*args):
     for object in args:
         workers.add_task(object.start)
 
-    # schedule.every(machineRate).seconds.do(sync_machine_data)
+    schedule.every(machineRate).seconds.do(sync_machine_data)
     schedule.every(qualityRate).seconds.do(sync_quality_data)
-    # schedule.every(productionRate).seconds.do(sync_production_data)
+    schedule.every(productionRate).seconds.do(sync_production_data)
     workers.add_task(start_scheduling_thread)
 #     start_sync_service(machineRate = sync_machine_data, qualityRate = sync_quality_data, productionRate = sync_production_data)
 
@@ -77,8 +77,9 @@ def sync_production_data():
             if data:
                 sendData = {
                     "record_type"   : "sx",
-                    "input"         : data["input"]     if "input"    in data else -1,
-                    "output"        : data["output"]    if "output"   in data else -1,
+                    "type"          : data["changeProduct"]     if "changeProduct" in data else -1,
+                    "input"         : data["input"]             if "input"    in data else -1,
+                    "output"        : data["output"]            if "output"   in data else -1,
                     "machine_id"    : device["ID"],
                     "timestamp"     : timeNow,
                 }
@@ -156,7 +157,6 @@ def query_data(deviceId,timeFrom,timeTo):
                 "deviceId"        : result.deviceId,
                 "machineStatus"   : result.machineStatus,
                 "actual"          : result.actual,
-                "runningNumber"   : result.runningNumber,
                 "timestamp"       : result.timestamp,
                 "temperature"     : result.temperature,
                 "humidity"        : result.humidity,
