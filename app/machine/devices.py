@@ -47,8 +47,8 @@ class UvMachine(BaseModbusPLC):
                 errorCode = 0
 
             # parsing data
-            input_data           = int(registerData[12])
-            output_data          = int(registerData[4])
+            input_data           = int(self._parse_register_data(r.registers, 12, 13))
+            output_data          = int(self._parse_register_data(r.registers, 4, 5))
             changeProduct_data   = int(registerData[8])
             uv3_data             = int(registerData[20])
             uv2_data             = int(registerData[32])

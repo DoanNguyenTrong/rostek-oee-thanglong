@@ -3,6 +3,8 @@ from pymodbus.client.sync import ModbusSerialClient
 from configure import STATUS
 
 import logging
+import struct
+
 from ..utils import vntime as VnTimeStamps
 from ..model.data_model import MachineData, UnsyncedMachineData
 
@@ -55,7 +57,7 @@ class BaseModbusPLC():
                 for device in self.configure["LISTDEVICE"]:
                     device_id = device["ID"]
                     captured_data[device_id]= {}
-                    captured_data[device_id]["Device_id"]= device_id
+                    captured_data[device_id]["deviceId"]= device_id
                     
                     try:
                         captured_data = self._read_data(device, captured_data)

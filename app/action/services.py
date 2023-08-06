@@ -13,6 +13,17 @@ from app.model.data_model import MachineData, UnsyncedMachineData
 from app.utils import vntime as VnTimeStamps
 from app import db_client
 
+
+async def publish_task(mqtt_handler, publish_topic, message, publish_interval):
+    while True:
+        mqtt_handler.publish(publish_topic, message)
+        await asyncio.sleep(publish_interval)
+
+async def another_task():
+    while True:
+        logging.info("Another task is running...")
+        await asyncio.sleep(10)
+
 async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
                mqtt_publisher: mqtt_client.MQTTClient,
                redis_obj):
@@ -22,6 +33,8 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
     logging.info("Starting program ...")
     
     mqtt_publisher.connect(keep_alive=True)
+    mqtt_publisher.subscribe([configure.MQTTCnf.RATETOPIC])
+
     await rabbit_publisher.connect(routing_key=['oee_data'])
     
     # hardware device
@@ -30,7 +43,24 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
                                 sql_database_client=db_client,
                                 configure=configure.RedisCnf)
     
-    mqtt_publisher.client.loop_start()
+    # mqtt_publisher.client.loop_start()
+    subscribe_topic = ["/TLP/Fre"]
+    # mqtt_publisher.subscribe(subscribe_topic)
+
+    # Start a task to handle publishing
+    publish_topic = "/Rostek/test_subsribe"
+    message = "Hello, MQTT!"
+    publish_interval = 5
+    # publish_coroutine = publish_task(mqtt_publisher, publish_topic, message, publish_interval)
+
+    # Start the another_task
+    # another_coroutine = another_task()
+    # production_task = synchronize_production_data(rabbit_publisher, 
+    #                                                mqtt_publisher, 
+    #                                                redis_db_client, 
+    #                                                db_client, 
+    #                                                plc_modbus)
+
     try:
         while True:
             production_task = synchronize_production_data(rabbit_publisher, 
@@ -38,32 +68,37 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
                                    redis_db_client, 
                                    db_client, 
                                    plc_modbus)
-            
             quality_task = synchronize_quality_data(rabbit_publisher, 
-                                   mqtt_publisher, 
-                                   redis_db_client, 
-                                   db_client, 
-                                   plc_modbus)
+                                    mqtt_publisher, 
+                                    redis_db_client, 
+                                    db_client, 
+                                    plc_modbus)
             
             machine_task = synchronize_machine_data(rabbit_publisher, 
-                                   mqtt_publisher, 
-                                   redis_db_client, 
-                                   db_client, 
-                                   plc_modbus)
+                                    mqtt_publisher, 
+                                    redis_db_client, 
+                                    db_client, 
+                                    plc_modbus)
             
             monitor_task = capture_store_data(redis_db_client,
-                                     db_client,
-                                     plc_modbus)
-            await asyncio.gather(production_task, quality_task, machine_task, monitor_task)
+                                        db_client,
+                                        plc_modbus)
+            # await monitor_task
+            await asyncio.gather(production_task, quality_task, machine_task, monitor_task, asyncio.sleep(0))
+
+            # await asyncio.gather(production_task, asyncio.sleep(0))
 
     except KeyboardInterrupt:
         print("KeyboardInterrupt received. Closing the publisher...")
     except Exception as e:
         logging.error(e.__str__())
 
+
+
 async def capture_store_data(redis_db_client:RedisMonitor,
                              sql_client:SQLAlchemy,
-                             plc_modbus:UvMachine):
+                             plc_modbus:UvMachine,
+                             sleep_time = 2):
     logging.info("Execute capture_store_data()")
     
     for device in plc_modbus.configure["LISTDEVICE"]:
@@ -89,7 +124,7 @@ async def capture_store_data(redis_db_client:RedisMonitor,
         except Exception as e:
             logging.error(e.__str__())
         logging.critical("Finish capture_store_data()")
-
+    await asyncio.sleep(sleep_time)
 
 async def synchronize_all_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
@@ -188,7 +223,7 @@ async def synchronize_production_data(rabbit_publisher:rabbit_client.RabbitMQPub
                            plc_modbus:UvMachine,
                            to_rabbit=False, to_mqtt=True):
     
-    logging.debug("Execute synchronize_data()")
+    logging.critical("Execute synchronize_production_data()")
     for device in plc_modbus.configure["LISTDEVICE"]:
         data = None
         try:
@@ -217,6 +252,7 @@ async def synchronize_production_data(rabbit_publisher:rabbit_client.RabbitMQPub
                 
                 
                 if to_mqtt:
+                    logging.debug("Publish to mqtt....")
                     mqtt_publisher.publish(topic= configure.MQTTCnf.PRODUCTIONTOPIC,
                                             data=json.dumps(production_data),
                                             qos=2,
@@ -239,6 +275,7 @@ async def synchronize_production_data(rabbit_publisher:rabbit_client.RabbitMQPub
     except Exception as e:
         logging.error(e.__str__())
         logging.critical("Failed to sleep!")
+    logging.critical("Finish synchronize_production_data()")
 
 async def synchronize_quality_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
@@ -308,6 +345,7 @@ async def synchronize_quality_data(rabbit_publisher:rabbit_client.RabbitMQPublis
     except Exception as e:
         logging.error(e.__str__())
         logging.critical("Failed to sleep!")
+    logging.critical("Finish synchronize_quality_data()")
 
 async def synchronize_machine_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
@@ -367,3 +405,4 @@ async def synchronize_machine_data(rabbit_publisher:rabbit_client.RabbitMQPublis
     except Exception as e:
         logging.error(e.__str__())
         logging.critical("Failed to sleep!")
+    logging.critical("Finish synchronize_machine_data()")
