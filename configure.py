@@ -33,6 +33,13 @@ class MQTTCnf(object):
     MQTT_KEEPALIVE      = 5
     MQTT_TLS_ENABLED    = False
 
+class SharedMemCfg(object):
+    MEM_NAME    = "frequency_table"
+    MEM_SIZE    = 3
+    MEM_SX_IDX  = 0
+    MEM_CL_IDX  = 1
+    EME_TB_IDX  = 2
+    
 class RedisCnf(object):
     HOST            = "localhost"
     PORT            = 6379
