@@ -117,8 +117,8 @@ class BaseModbusPLC():
 
             captured_data[device_id]["input"]         = input_data
             captured_data[device_id]["output"]         = output_data
-            captured_data[device_id]["temperature"]    = temperature
-            captured_data[device_id]["humidity"]       = humidity
+            captured_data[device_id]["temperature"]    = temperature_data
+            captured_data[device_id]["humidity"]       = humidity_data
             captured_data[device_id]["changeProduct"] = changeProduct_data
             captured_data[device_id]["status"]         = status
             captured_data[device_id]["error"]         = errorCode

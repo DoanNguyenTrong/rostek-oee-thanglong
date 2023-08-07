@@ -71,6 +71,7 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
                                     all_plc_devices)
     
     device_coroutine = capture_loop(redis_db_client,
+                                    mqtt_publisher,
                                         db_client,
                                         all_plc_devices)
     logging.critical("Enter main loop ...")
@@ -91,9 +92,14 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
 
 
 async def capture_store_data(redis_db_client:RedisMonitor,
+                             mqtt_publisher:mqtt_client.MQTTClient,
                              sql_client:SQLAlchemy,
                              plc_devices:list,
                              sleep_time = 1):
+    """
+        also publish critical messages
+    """
+    
     logging.info("Execute capture_store_data()")
     for device in plc_devices:
         for device_configure in device.configure["LISTDEVICE"]:
@@ -108,12 +114,16 @@ async def capture_store_data(redis_db_client:RedisMonitor,
                 logging.info(f"Current: {current_data}")
                 logging.info(f"Old    : {latest_data}")
 
-                updatable = redis_db_client.compare(device_configure["ID"], 
+                updatable = redis_db_client.compare(device_configure["ID"],
+                                                    mqtt_publisher,
                                                 latest_data, 
                                                 current_data[device_configure["ID"]])
+                
+
                 if updatable:
-                    logging.debug("Saving to SQL and Redis ..........")
+                    logging.debug("Saving to SQL ...")
                     redis_db_client.save_to_sql(redis_topic_name, current_data[device_configure["ID"]])
+                
                 redis_db_client.save_to_redis(redis_topic_name, current_data[device_configure["ID"]])
                 
             except Exception as e:
@@ -122,12 +132,14 @@ async def capture_store_data(redis_db_client:RedisMonitor,
         await asyncio.sleep(sleep_time)
 
 async def capture_loop(redis_db_client:RedisMonitor,
+                       mqtt_publisher:mqtt_client.MQTTClient,
                              sql_client:SQLAlchemy,
                              plc_devices:list,
                              sleep_time = 1):
     current_time =VnTimeStamps.now()
     while True:
         await capture_store_data(redis_db_client,
+                                 mqtt_publisher,
                                 db_client,
                                 plc_devices)
         

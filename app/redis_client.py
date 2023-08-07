@@ -4,6 +4,9 @@ import logging
 import app.utils.vntime as VnTimeStamps
 
 from app.model.data_model import MachineData, UnsyncedMachineData
+from app.mqtt_client import MQTTClient
+
+import json
 
 class RedisMonitor():
     def __init__(self, redis_client, sql_database_client, configure) -> None:
@@ -42,7 +45,11 @@ class RedisMonitor():
         logging.debug(f"Latest data: {redis_data}")
         return redis_data
     
-    def compare(self, device_id, redis_data:dict, current_data:dict):
+    def compare(self, device_id:str,
+                mqtt_publisher:MQTTClient, 
+                redis_data:dict, 
+                current_data:dict):
+        
         logging.debug("Execute: compare()")
         logging.debug(f"Current: {current_data}")
         logging.debug(f"Redis  : {redis_data}")
@@ -50,7 +57,7 @@ class RedisMonitor():
             status_changed    = self._is_status_change      (redis_data, current_data["status"])
             output_changed    = self._is_output_change      (redis_data, current_data["output"])
             input_changed     = self._is_input_change       (redis_data, current_data["input"])
-            product_changed   = self._is_changing_product   (redis_data, current_data["changeProduct"])
+            product_changed   = self._is_changing_product   (redis_data, current_data["changeProduct"], mqtt_publisher)
             error             = self._is_error              (redis_data, current_data["errorCode"])
             
             if status_changed or output_changed or input_changed or product_changed or error:
@@ -145,7 +152,7 @@ class RedisMonitor():
             return True
         return False
     
-    def _is_changing_product(self, data:dict, changeProduct):
+    def _is_changing_product(self, data:dict, changeProduct, mqtt_publisher:MQTTClient):
         """
         Check if changing product
         """
@@ -157,10 +164,17 @@ class RedisMonitor():
             return True
         elif data["changeProduct"] == 1 and changeProduct == 0:
             logging.debug(f"Stop changing product, cur: {data['changeProduct']}, curr: {changeProduct}")
+            mqtt_publisher.publish(mqtt_publisher.configures.STARTPRODUCTION, 
+                                   json.dumps(self._generate_start_production_msg(data['deviceId'], now)))
             return True
         else:
             return False
-    
+    def _generate_start_production_msg(self, deviceId, now):
+        return {
+            "record_type"   : "tsl",
+            "machine_id"    : deviceId,
+            "timestamp"     : now
+        }
     def _is_error(self, data:dict, errorCode):
         """
         Check if error
