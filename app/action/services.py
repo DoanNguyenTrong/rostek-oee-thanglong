@@ -19,10 +19,8 @@ async def publish_task(mqtt_handler, publish_topic, message, publish_interval):
         mqtt_handler.publish(publish_topic, message)
         await asyncio.sleep(publish_interval)
 
-async def another_task():
-    while True:
-        logging.info("Another task is running...")
-        await asyncio.sleep(10)
+
+
 
 async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
                mqtt_publisher: mqtt_client.MQTTClient,
@@ -55,46 +53,45 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
 
     # Start the another_task
     # another_coroutine = another_task()
-    
-    try:
-        while True:
-            production_task = synchronize_production_data(rabbit_publisher, 
+    production_coroutine = production_loop(rabbit_publisher, 
                                         mqtt_publisher, 
                                         redis_db_client, 
                                         db_client, 
                                         plc_modbus)
-            
-            # quality_task = synchronize_quality_data(rabbit_publisher, 
-            #                         mqtt_publisher, 
-            #                         redis_db_client, 
-            #                         db_client, 
-            #                         plc_modbus)
-            
-            # machine_task = synchronize_machine_data(rabbit_publisher, 
-            #                         mqtt_publisher, 
-            #                         redis_db_client, 
-            #                         db_client, 
-            #                         plc_modbus)
-            
-            monitor_task = capture_store_data(redis_db_client,
+    quality_coroutine = quality_loop(rabbit_publisher, 
+                                    mqtt_publisher, 
+                                    redis_db_client, 
+                                    db_client, 
+                                    plc_modbus)
+    
+    machine_coroutine = machine_loop(rabbit_publisher, 
+                                    mqtt_publisher, 
+                                    redis_db_client, 
+                                    db_client, 
+                                    plc_modbus)
+    device_coroutine = capture_store_data(redis_db_client,
                                         db_client,
                                         plc_modbus)
-            # await monitor_task
-            await asyncio.gather(production_task, monitor_task, asyncio.sleep(0))
+    try:
+        while True:
+            await asyncio.gather(device_coroutine, 
+                                 production_coroutine,
+                                 quality_coroutine,
+                                 machine_coroutine,
+                                 asyncio.sleep(0))
 
             # await asyncio.gather(production_task, asyncio.sleep(0))
-
+            
     except KeyboardInterrupt:
         print("KeyboardInterrupt received. Closing the publisher...")
     except Exception as e:
         logging.error(e.__str__())
 
 
-
 async def capture_store_data(redis_db_client:RedisMonitor,
                              sql_client:SQLAlchemy,
                              plc_modbus:UvMachine,
-                             sleep_time = 2):
+                             sleep_time = 1):
     logging.info("Execute capture_store_data()")
     
     for device in plc_modbus.configure["LISTDEVICE"]:
@@ -121,6 +118,22 @@ async def capture_store_data(redis_db_client:RedisMonitor,
             logging.error(e.__str__())
         logging.critical("Finish capture_store_data()")
     await asyncio.sleep(sleep_time)
+
+async def capture_loop(redis_db_client:RedisMonitor,
+                             sql_client:SQLAlchemy,
+                             plc_modbus:UvMachine,
+                             sleep_time = 1):
+    current_time =VnTimeStamps.now()
+    while True:
+        await capture_store_data(redis_db_client,
+                                db_client,
+                                plc_modbus)
+        await asyncio.sleep(sleep_time)
+        
+        logging.critical("Finish  capture_loop()")
+        logging.critical(f"capture_loop() time: {VnTimeStamps.now() - current_time}")
+        current_time = VnTimeStamps.now()
+
 
 async def synchronize_all_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
@@ -218,7 +231,7 @@ async def synchronize_production_data(rabbit_publisher:rabbit_client.RabbitMQPub
                            sql_client:SQLAlchemy,
                            plc_modbus:UvMachine,
                            to_rabbit=False, to_mqtt=True):
-    
+    start_time = VnTimeStamps.now()
     logging.critical("Execute synchronize_production_data()")
     for device in plc_modbus.configure["LISTDEVICE"]:
         data = None
@@ -259,21 +272,9 @@ async def synchronize_production_data(rabbit_publisher:rabbit_client.RabbitMQPub
                 data = None
         else:
             logging.debug("Data queue is empty!")
-    try:
-        sleep_time_data = redis_db_client.redis_client.hgetall(configure.RedisCnf.RATETOPIC)
-        sleep_time = configure.GeneralConfig.DEFAULTRATE 
-        if "production" in sleep_time_data:
-            sleep_time = int(sleep_time_data['production'])
-        
-        logging.critical(f"production - Sleeping for: {sleep_time}")
-        # current = VnTimeStamps.now()
-        await asyncio.sleep(configure.GeneralConfig.DEFAULTRATE)
-        # sleep_for = VnTimeStamps.now() - current
-        # logging.critical(f"production - Sleep for {sleep_for}")
-    except Exception as e:
-        logging.error(e.__str__())
-        logging.critical("Failed to sleep!")
-    logging.critical("Finish synchronize_production_data()")
+    
+    end_time = VnTimeStamps.now()
+    logging.critical(f"Execute synchronize_production_data(), time: {end_time-start_time}")
 
 async def synchronize_quality_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
@@ -282,6 +283,7 @@ async def synchronize_quality_data(rabbit_publisher:rabbit_client.RabbitMQPublis
                            plc_modbus:UvMachine,
                            to_rabbit=False, to_mqtt=True):
     
+    start_time = VnTimeStamps.now()
     logging.debug("Execute synchronize_data()")
     for device in plc_modbus.configure["LISTDEVICE"]:
         data = None
@@ -330,20 +332,8 @@ async def synchronize_quality_data(rabbit_publisher:rabbit_client.RabbitMQPublis
                 data = None
         else:
             logging.debug("Data queue is empty!")
-    
-    try:
-        sleep_time_data = redis_db_client.redis_client.hgetall(configure.RedisCnf.RATETOPIC)
-        sleep_time = configure.GeneralConfig.DEFAULTRATE 
-        if "quality" in sleep_time_data:
-            sleep_time = int(sleep_time_data['quality'])
-        
-        logging.critical(f"quality - Sleeping for: {sleep_time}")
-        await asyncio.sleep(sleep_time)
-    
-    except Exception as e:
-        logging.error(e.__str__())
-        logging.critical("Failed to sleep!")
-    logging.critical("Finish synchronize_quality_data()")
+    end_time = VnTimeStamps.now()
+    logging.critical(f"Execute synchronize_quality_data(), time: {end_time-start_time}")
 
 async def synchronize_machine_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
@@ -352,7 +342,8 @@ async def synchronize_machine_data(rabbit_publisher:rabbit_client.RabbitMQPublis
                            plc_modbus:UvMachine,
                            to_rabbit=False, to_mqtt=True):
     
-    logging.debug("Execute synchronize_data()")
+    start_time = VnTimeStamps.now()
+    logging.debug("Execute synchronize_machine_data()")
     for device in plc_modbus.configure["LISTDEVICE"]:
         data = None
         try:
@@ -391,16 +382,95 @@ async def synchronize_machine_data(rabbit_publisher:rabbit_client.RabbitMQPublis
         else:
             logging.debug("Data queue is empty!")
     
-    try:
-        sleep_time_data = redis_db_client.redis_client.hgetall(configure.RedisCnf.RATETOPIC)
-        sleep_time = configure.GeneralConfig.DEFAULTRATE 
-        if "machine" in sleep_time_data:
-            sleep_time = int(sleep_time_data['machine'])
+    end_time = VnTimeStamps.now()
+    logging.critical(f"Execute synchronize_machine_data(), time: {end_time-start_time}")
+
+async def production_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
+                           mqtt_publisher:mqtt_client.MQTTClient, 
+                           redis_db_client:RedisMonitor,
+                           sql_client:SQLAlchemy,
+                           plc_modbus:UvMachine,
+                           to_rabbit=False, to_mqtt=True):
+    current_time =VnTimeStamps.now()
+    while True:
+        await synchronize_production_data(rabbit_publisher, 
+                                        mqtt_publisher, 
+                                        redis_db_client, 
+                                        db_client, 
+                                        plc_modbus,
+                                        to_rabbit=to_rabbit,
+                                        to_mqtt=to_mqtt)
+        try:
+            sleep_time_data = redis_db_client.redis_client.hgetall(configure.RedisCnf.RATETOPIC)
+            sleep_time = configure.GeneralConfig.DEFAULTRATE 
+            if "production" in sleep_time_data:
+                sleep_time = int(sleep_time_data['production'])
+            
+            logging.critical(f"production - Sleeping for: {sleep_time}")
+            # current = VnTimeStamps.now()
+            await asyncio.sleep(sleep_time)
+        # sleep_for = VnTimeStamps.now() - current
+        # logging.critical(f"production - Sleep for {sleep_for}")
+        except Exception as e:
+            logging.error(e.__str__())
+            logging.critical("Failed to sleep!")
         
-        logging.critical(f"machine - Sleeping for: {sleep_time}")
-        await asyncio.sleep(sleep_time)
-    
-    except Exception as e:
-        logging.error(e.__str__())
-        logging.critical("Failed to sleep!")
-    logging.critical("Finish synchronize_machine_data()")
+        logging.critical("Finish  production_loop()")
+        logging.critical(f"production_loop() time: {VnTimeStamps.now() - current_time}")
+        current_time = VnTimeStamps.now()
+
+async def quality_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
+                           mqtt_publisher:mqtt_client.MQTTClient, 
+                           redis_db_client:RedisMonitor,
+                           sql_client:SQLAlchemy,
+                           plc_modbus:UvMachine,
+                           to_rabbit=False, to_mqtt=True):
+    current_time =VnTimeStamps.now()
+    while True:
+        await synchronize_quality_data(rabbit_publisher, 
+                                    mqtt_publisher, 
+                                    redis_db_client, 
+                                    db_client, 
+                                    plc_modbus)
+        try:
+            sleep_time_data = redis_db_client.redis_client.hgetall(configure.RedisCnf.RATETOPIC)
+            sleep_time = configure.GeneralConfig.DEFAULTRATE 
+            if "quality" in sleep_time_data:
+                sleep_time = int(sleep_time_data['quality'])
+            
+            logging.critical(f"quality - Sleeping for: {sleep_time}")
+            await asyncio.sleep(sleep_time)
+        except Exception as e:
+            logging.error(e.__str__())
+            logging.critical("Failed to sleep!")
+        logging.critical("Finish  quality_loop()")
+        logging.critical(f"quality_loop() time: {VnTimeStamps.now() - current_time}")
+        current_time = VnTimeStamps.now()
+
+async def machine_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
+                           mqtt_publisher:mqtt_client.MQTTClient, 
+                           redis_db_client:RedisMonitor,
+                           sql_client:SQLAlchemy,
+                           plc_modbus:UvMachine,
+                           to_rabbit=False, to_mqtt=True):
+    current_time =VnTimeStamps.now()
+    while True:
+        await synchronize_machine_data(rabbit_publisher, 
+                                    mqtt_publisher, 
+                                    redis_db_client, 
+                                    db_client, 
+                                    plc_modbus)
+        try:
+            sleep_time_data = redis_db_client.redis_client.hgetall(configure.RedisCnf.RATETOPIC)
+            sleep_time = configure.GeneralConfig.DEFAULTRATE 
+            if "machine" in sleep_time_data:
+                sleep_time = int(sleep_time_data['machine'])
+            
+            logging.critical(f"machine - Sleeping for: {sleep_time}")
+            await asyncio.sleep(sleep_time)
+        except Exception as e:
+            logging.error(e.__str__())
+            logging.critical("Failed to sleep!")
+        logging.critical("Finish  machine_loop()")
+        logging.critical(f"machine_loop() time: {VnTimeStamps.now() - current_time}")
+        current_time = VnTimeStamps.now()
