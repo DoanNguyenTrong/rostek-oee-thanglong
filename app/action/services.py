@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 import app.mqtt_client as mqtt_client
 import configure 
 import app.rabbit_client as rabbit_client
-from app.machine.devices import UvMachine
+from app.machine.devices import UvMachine, BoxFolding
 from app.redis_client import RedisMonitor
 from app.model.data_model import MachineData, UnsyncedMachineData
 from app.utils import vntime as VnTimeStamps
@@ -28,31 +28,23 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
     """
     Create instance of machine object and start related functions
     """
-    logging.info("Starting program ...")
+    logging.critical("Starting program ...")
+    
+    # hardware device
+    plc_modbus  = UvMachine(configure.uvMachineConfigure)
+    plc_box_folding = BoxFolding(configure.boxFoldingMachineConfigure)
+    
+
+    redis_db_client = RedisMonitor(redis_client=redis_obj,
+                                sql_database_client=db_client,
+                                configure=configure.RedisCnf)
     
     mqtt_publisher.connect(keep_alive=True)
     mqtt_publisher.subscribe([configure.MQTTCnf.RATETOPIC])
 
     await rabbit_publisher.connect(routing_key=['oee_data'])
     
-    # hardware device
-    plc_modbus  = UvMachine(configure.uvMachineConfigure)
-    redis_db_client = RedisMonitor(redis_client=redis_obj,
-                                sql_database_client=db_client,
-                                configure=configure.RedisCnf)
-    
-    # mqtt_publisher.client.loop_start()
-    subscribe_topic = ["/TLP/Fre"]
-    # mqtt_publisher.subscribe(subscribe_topic)
-
-    # Start a task to handle publishing
-    publish_topic = "/Rostek/test_subsribe"
-    message = "Hello, MQTT!"
-    publish_interval = 5
-    # publish_coroutine = publish_task(mqtt_publisher, publish_topic, message, publish_interval)
-
-    # Start the another_task
-    # another_coroutine = another_task()
+    # All coroutines defined
     production_coroutine = production_loop(rabbit_publisher, 
                                         mqtt_publisher, 
                                         redis_db_client, 

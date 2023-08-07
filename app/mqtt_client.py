@@ -77,7 +77,7 @@ class MQTTClient():
         #         logging.error(e.__str__())
         #         logging.error(f"Credential: {credential}")
     
-    def connect(self, keep_alive=True, sleeptime=2, log_enable=True):
+    def connect(self, keep_alive=True, sleeptime=2, log_enable=False):
         """Connect to broker:port"""
         logging.info("Connecting to broker {}:{}".format(self.configures.BROKER_IP,
                                                          self.configures.PORT))
@@ -93,7 +93,9 @@ class MQTTClient():
             self.client.on_message = self.on_message
             self.client.on_subscribe = self.on_subscribe
             self.client.on_disconnect = self.on_disconnect
-            self.client.on_log = self.on_log
+            
+            if log_enable:
+                self.client.on_log = self.on_log
 
             self.client.loop_start()
             time.sleep(sleeptime) # Wait for connection setup to complete
