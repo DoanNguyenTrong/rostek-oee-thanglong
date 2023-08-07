@@ -132,7 +132,10 @@ async def capture_loop(redis_db_client:RedisMonitor,
                                 plc_devices)
         
         execute_time = VnTimeStamps.now() - current_time
-        await asyncio.sleep(sleep_time-execute_time)
+        sleep_time -= execute_time
+        sleep_time = sleep_time if sleep_time > 0 else 0
+        logging.critical(f"capture_loop() sleeping for: {sleep_time}")
+        await asyncio.sleep(sleep_time)
     
         logging.critical("Finish  capture_loop()")
         logging.critical(f"capture_loop() time: {VnTimeStamps.now() - current_time}")
@@ -419,6 +422,7 @@ async def production_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
             
             execute_time = VnTimeStamps.now() - current_time
             sleep_time -= execute_time
+            sleep_time = sleep_time if sleep_time > 0 else 0
             logging.critical(f"production - Sleeping for: {sleep_time}")
             await asyncio.sleep(sleep_time)
 
@@ -451,8 +455,10 @@ async def quality_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
             
             execute_time = VnTimeStamps.now() - current_time
             sleep_time -= execute_time
+            sleep_time = sleep_time if sleep_time > 0 else 0
             logging.critical(f"quality - Sleeping for: {sleep_time}")
             await asyncio.sleep(sleep_time)
+       
         except Exception as e:
             logging.error(e.__str__())
             logging.critical("Failed to sleep!")
@@ -481,8 +487,10 @@ async def machine_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
             
             execute_time = VnTimeStamps.now() - current_time
             sleep_time -= execute_time
+            sleep_time = sleep_time if sleep_time > 0 else 0
             logging.critical(f"machine - Sleeping for: {sleep_time}")
             await asyncio.sleep(sleep_time)
+        
         except Exception as e:
             logging.error(e.__str__())
             logging.critical("Failed to sleep!")
