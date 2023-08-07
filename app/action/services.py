@@ -55,36 +55,32 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
 
     # Start the another_task
     # another_coroutine = another_task()
-    # production_task = synchronize_production_data(rabbit_publisher, 
-    #                                                mqtt_publisher, 
-    #                                                redis_db_client, 
-    #                                                db_client, 
-    #                                                plc_modbus)
-
+    
     try:
         while True:
             production_task = synchronize_production_data(rabbit_publisher, 
-                                   mqtt_publisher, 
-                                   redis_db_client, 
-                                   db_client, 
-                                   plc_modbus)
-            quality_task = synchronize_quality_data(rabbit_publisher, 
-                                    mqtt_publisher, 
-                                    redis_db_client, 
-                                    db_client, 
-                                    plc_modbus)
+                                        mqtt_publisher, 
+                                        redis_db_client, 
+                                        db_client, 
+                                        plc_modbus)
             
-            machine_task = synchronize_machine_data(rabbit_publisher, 
-                                    mqtt_publisher, 
-                                    redis_db_client, 
-                                    db_client, 
-                                    plc_modbus)
+            # quality_task = synchronize_quality_data(rabbit_publisher, 
+            #                         mqtt_publisher, 
+            #                         redis_db_client, 
+            #                         db_client, 
+            #                         plc_modbus)
+            
+            # machine_task = synchronize_machine_data(rabbit_publisher, 
+            #                         mqtt_publisher, 
+            #                         redis_db_client, 
+            #                         db_client, 
+            #                         plc_modbus)
             
             monitor_task = capture_store_data(redis_db_client,
                                         db_client,
                                         plc_modbus)
             # await monitor_task
-            await asyncio.gather(production_task, quality_task, machine_task, monitor_task, asyncio.sleep(0))
+            await asyncio.gather(production_task, monitor_task, asyncio.sleep(0))
 
             # await asyncio.gather(production_task, asyncio.sleep(0))
 
@@ -270,8 +266,10 @@ async def synchronize_production_data(rabbit_publisher:rabbit_client.RabbitMQPub
             sleep_time = int(sleep_time_data['production'])
         
         logging.critical(f"production - Sleeping for: {sleep_time}")
+        # current = VnTimeStamps.now()
         await asyncio.sleep(configure.GeneralConfig.DEFAULTRATE)
-    
+        # sleep_for = VnTimeStamps.now() - current
+        # logging.critical(f"production - Sleep for {sleep_for}")
     except Exception as e:
         logging.error(e.__str__())
         logging.critical("Failed to sleep!")
@@ -340,7 +338,7 @@ async def synchronize_quality_data(rabbit_publisher:rabbit_client.RabbitMQPublis
             sleep_time = int(sleep_time_data['quality'])
         
         logging.critical(f"quality - Sleeping for: {sleep_time}")
-        await asyncio.sleep(configure.GeneralConfig.DEFAULTRATE)
+        await asyncio.sleep(sleep_time)
     
     except Exception as e:
         logging.error(e.__str__())
@@ -400,7 +398,7 @@ async def synchronize_machine_data(rabbit_publisher:rabbit_client.RabbitMQPublis
             sleep_time = int(sleep_time_data['machine'])
         
         logging.critical(f"machine - Sleeping for: {sleep_time}")
-        await asyncio.sleep(configure.GeneralConfig.DEFAULTRATE)
+        await asyncio.sleep(sleep_time)
     
     except Exception as e:
         logging.error(e.__str__())

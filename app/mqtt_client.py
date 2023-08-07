@@ -77,7 +77,7 @@ class MQTTClient():
         #         logging.error(e.__str__())
         #         logging.error(f"Credential: {credential}")
     
-    def connect(self, keep_alive=True, sleeptime=2):
+    def connect(self, keep_alive=True, sleeptime=2, log_enable=True):
         """Connect to broker:port"""
         logging.info("Connecting to broker {}:{}".format(self.configures.BROKER_IP,
                                                          self.configures.PORT))
@@ -156,7 +156,7 @@ class MQTTClient():
             self.client.reconnecting_flag    = False # TODO: unknown
             logging.info("Connected OK Returned code: %s \n"%rc)
             logging.critical(f'Subscribing to topic /TLP/Fre')
-            self.client.subscribe("/TLP/Fre")
+            self.client.subscribe("/TLP/Fre", qos=2)
         else:
             logging.info("Bad connection Returned code: %s \n"%rc)
 

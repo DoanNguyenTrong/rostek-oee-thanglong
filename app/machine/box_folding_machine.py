@@ -1,4 +1,4 @@
-from pymodbus.client.sync import ModbusSerialClient
+sfrom pymodbus.client.sync import ModbusSerialClient
 import logging, json, struct, time
 import utils.vntime as VnTimeStamps
 from configure import *

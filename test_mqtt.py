@@ -1,5 +1,7 @@
 import paho.mqtt.client as mqtt
 import asyncio
+import time
+
 
 class MqttHandler:
     def __init__(self, broker_address, broker_port, username, password):
@@ -32,9 +34,11 @@ class MqttHandler:
     def subscribe(self, topic):
         self.client.subscribe(topic)
 
-    def publish(self, topic, message):
+    def publish(self, topic, message:str):
         self.userdata['topic'] = topic
         # self.client.
+        message += ","
+        message += str(time.time())
         result, mid = self.client.publish(topic, message)
         return result, mid
 
