@@ -2,7 +2,7 @@ from pymodbus.client.sync import ModbusSerialClient
 import logging, json, struct, time
 import utils.vntime as VnTimeStamps
 from configure import *
-from ..model.data_model import MachineData
+from ...model.data_model import MachineData
 from app import db
 from .model_machine import MACHINE
 
