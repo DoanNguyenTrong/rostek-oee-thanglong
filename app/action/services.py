@@ -130,8 +130,10 @@ async def capture_loop(redis_db_client:RedisMonitor,
         await capture_store_data(redis_db_client,
                                 db_client,
                                 plc_devices)
-        await asyncio.sleep(sleep_time)
         
+        execute_time = VnTimeStamps.now() - current_time
+        await asyncio.sleep(sleep_time-execute_time)
+    
         logging.critical("Finish  capture_loop()")
         logging.critical(f"capture_loop() time: {VnTimeStamps.now() - current_time}")
         current_time = VnTimeStamps.now()
@@ -409,17 +411,17 @@ async def production_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                                         plc_devices,
                                         to_rabbit=to_rabbit,
                                         to_mqtt=to_mqtt)
-        try:
+        try:            
             sleep_time_data = redis_db_client.redis_client.hgetall(configure.RedisCnf.RATETOPIC)
             sleep_time = configure.GeneralConfig.DEFAULTRATE 
             if "production" in sleep_time_data:
                 sleep_time = int(sleep_time_data['production'])
             
+            execute_time = VnTimeStamps.now() - current_time
+            sleep_time -= execute_time
             logging.critical(f"production - Sleeping for: {sleep_time}")
-            # current = VnTimeStamps.now()
             await asyncio.sleep(sleep_time)
-        # sleep_for = VnTimeStamps.now() - current
-        # logging.critical(f"production - Sleep for {sleep_for}")
+
         except Exception as e:
             logging.error(e.__str__())
             logging.critical("Failed to sleep!")
@@ -447,6 +449,8 @@ async def quality_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
             if "quality" in sleep_time_data:
                 sleep_time = int(sleep_time_data['quality'])
             
+            execute_time = VnTimeStamps.now() - current_time
+            sleep_time -= execute_time
             logging.critical(f"quality - Sleeping for: {sleep_time}")
             await asyncio.sleep(sleep_time)
         except Exception as e:
@@ -475,6 +479,8 @@ async def machine_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
             if "machine" in sleep_time_data:
                 sleep_time = int(sleep_time_data['machine'])
             
+            execute_time = VnTimeStamps.now() - current_time
+            sleep_time -= execute_time
             logging.critical(f"machine - Sleeping for: {sleep_time}")
             await asyncio.sleep(sleep_time)
         except Exception as e:
