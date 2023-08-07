@@ -10,7 +10,7 @@ import app.rabbit_client as rabbit_client
 from app.machine.base_modbus import BaseModbusPLC
 from app.machine.devices import UvMachine, BoxFoldingMachine, CuttingMachine, PrintingMachine
 from app.redis_client import RedisMonitor
-from app.model.data_model import MachineData, UnsyncedMachineData
+from app.model.data_model import MachineData
 from app.utils import vntime as VnTimeStamps
 from app import db_client
 
@@ -44,7 +44,10 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
     logging.critical("Initialize data publisher: MQTT, RabbitMQ")
     redis_db_client = RedisMonitor(redis_client=redis_obj,
                                 sql_database_client=db_client,
-                                configure=configure.RedisCnf)
+                                configure=configure.RedisCnf,
+                                MachineDataModel=MachineData)
+    
+    mqtt_publisher.add_userdata("sql_model", data_obj=MachineData, print_data=True)
     
     mqtt_publisher.connect(keep_alive=True)
     # mqtt_publisher.subscribe([configure.MQTTCnf.RATETOPIC])

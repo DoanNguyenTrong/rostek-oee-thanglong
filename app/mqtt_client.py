@@ -3,6 +3,8 @@ import paho.mqtt.client as mqtt
 import json
 
 from configure import MQTTCnf, RedisCnf
+from sqlalchemy import and_
+
 
 def mqtt_args_parser(parser):
     """Add parser augument for MQTT options."""
@@ -119,6 +121,12 @@ class MQTTClient():
         except Exception as e:
             logging.error(e.__str__())
 
+    def add_userdata(self, key:str, data_obj, print_data=True):
+        self.user_data[key] = data_obj
+        if print_data:
+            logging.critical("MQTT DATA")
+            logging.critical(self.user_data)
+
     def publish(self, topic, data, qos = 1, retain=False):
         """Publish "data" -> "topic" """
 
@@ -159,6 +167,7 @@ class MQTTClient():
             logging.info("Connected OK Returned code: %s \n"%rc)
             logging.critical(f'Subscribing to topic /TLP/Fre')
             self.client.subscribe("/TLP/Fre", qos=2)
+            self.client.subscribe("/requestData", qos=2)
         else:
             logging.info("Bad connection Returned code: %s \n"%rc)
 
@@ -211,14 +220,23 @@ class MQTTClient():
                 logging.critical("Change machine freq")
 
         elif "/requestData" in topic:
-            redisClient = userdata["redisClient"]
-            # handle_request_data(deviceId,received_data,client)
-        elif "/humtemprate" in message_topic:
-            redisClient = userdata["redisClient"]
-            # handle_humtemp_rate_data(client,received_data,redisClient)
-        elif "/requestData" in message_topic:
-            redisClient = userdata["redisClient"]
-            # handle_request_data(deviceId,received_data,client)
+            sql_model = userdata["sql_model"]
+            timeFrom    = data["from"]
+            timeTo      = data["to"]
+            logging.critical(f"Data being requested from {timeFrom}, to {timeTo}")
+
+            data = []
+            results = sql_model.query.filter(and_(sql_model.timestamp >= timeFrom,
+                                                  sql_model.timestamp <= timeTo, 
+                                                  sql_model.deviceId == deviceId)).all()
+            for result in results:
+                logging.critical(f"Querried data: {result}")
+                data.append(result)
+                
+            self.client.publish(json.dumps(data), qos=1)
+
+        else:
+            logging.warn(f"Unkown topic: {topic}")
         
         if message.retain==1:
             logging.debug("This is a retained message")

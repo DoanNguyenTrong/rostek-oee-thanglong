@@ -2,17 +2,16 @@ from configure import STATUS
 
 import logging
 import app.utils.vntime as VnTimeStamps
-
-from app.model.data_model import MachineData, UnsyncedMachineData
 from app.mqtt_client import MQTTClient
 
 import json
 
 class RedisMonitor():
-    def __init__(self, redis_client, sql_database_client, configure) -> None:
+    def __init__(self, redis_client, sql_database_client, configure, MachineDataModel) -> None:
         self.configure = configure
         self.redis_client = redis_client
         self.sql_database_client = sql_database_client
+        self.MachineData = MachineDataModel
 
     def get_redis_data(self, topic:str):
         """
@@ -69,25 +68,26 @@ class RedisMonitor():
     def save_to_sql(self, device_id:str, current_data:dict):
         timeNow = int(VnTimeStamps.now())
         current_data["timestamp"]  = timeNow
-        data = MachineData(
+        data = self.MachineData(
             deviceId            = device_id,
-            machineStatus       = current_data['status'] if 'status' in current_data else -1,
-            output              = current_data['output'] if 'output' in current_data else -1,
-            input               = current_data['input'] if 'input' in current_data else -1,
-            errorCode           = current_data["errorCode"]if 'errorCode' in current_data else -1,
-            envTemp             = current_data["envTemp"]if 'envTemp' in current_data else -1,
-            envHum              = current_data["envHum"]if 'envHum' in current_data else -1,
-            waterTemp           = current_data["waterTemp"]if 'waterTemp' in current_data else -1,
-            waterpH             = current_data["waterpH"]if 'waterpH' in current_data else -1,
+            machineStatus       = current_data['status'] if 'status' in current_data else None,
+            output              = current_data['output'] if 'output' in current_data else None,
+            input               = current_data['input'] if 'input' in current_data else None,
+            errorCode           = current_data["errorCode"]if 'errorCode' in current_data else None,
+            envTemp             = current_data["envTemp"]if 'envTemp' in current_data else None,
+            envHum              = current_data["envHum"]if 'envHum' in current_data else None,
+            waterTemp           = current_data["waterTemp"]if 'waterTemp' in current_data else None,
+            waterpH             = current_data["waterpH"]if 'waterpH' in current_data else None,
             timestamp           = timeNow,
-            uv1                 = current_data["uv1"]if 'uv1' in current_data else -1,
-            uv2                 = current_data["uv2"]if 'uv2' in current_data else -1,
-            uv3                 = current_data["uv3"]if 'uv3' in current_data else -1,
-            upperAirPressure    = current_data["upperAirPressure"]if 'upperAirPressure' in current_data else -1,
-            lowerAirPressure    = current_data["lowerAirPressure"]if 'lowerAirPressure' in current_data else -1,
-            gluePressure        = current_data["gluePressure"]if 'gluePressure' in current_data else -1,
-            glueTemp            = current_data["glueTemp"]if 'glueTemp' in current_data else -1,
-            isChanging          = current_data["isChanging"]if 'isChanging' in current_data else -1
+            uv1                 = current_data["uv1"]if 'uv1' in current_data else None,
+            uv2                 = current_data["uv2"]if 'uv2' in current_data else None,
+            uv3                 = current_data["uv3"]if 'uv3' in current_data else None,
+            upperAirPressure    = current_data["upperAirPressure"]if 'upperAirPressure' in current_data else None,
+            lowerAirPressure    = current_data["lowerAirPressure"]if 'lowerAirPressure' in current_data else None,
+            gluePressure        = current_data["gluePressure"]if 'gluePressure' in current_data else None,
+            glueTemp            = current_data["glueTemp"]if 'glueTemp' in current_data else None,
+            isChanging          = current_data["isChanging"]if 'isChanging' in current_data else None,
+            runningNumber       = current_data["runningNumber"]if 'runningNumber' in current_data else 0,
         )
         
         self._to_sql(data, data)
