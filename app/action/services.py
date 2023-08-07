@@ -32,42 +32,48 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
     logging.critical("Starting program ...")
     
     # hardware device
+    logging.critical("Initialize PLC modules ...")
     plc_uv  = UvMachine(configure.uvMachineConfigure)
     plc_box_folding = BoxFoldingMachine(configure.boxFoldingMachineConfigure)
     plc_cutting = CuttingMachine(configure=configure.cuttingMachineConfigure)
     plc_printing = PrintingMachine(configure=configure.printingMachineConfigure)
 
-    plc_modbus = [plc_uv, plc_box_folding, plc_cutting, plc_printing]
+    # plc_modbus = [plc_uv, plc_box_folding, plc_cutting, plc_printing]
+    all_plc_devices = [plc_uv]
 
+    logging.critical("Initialize data publisher: MQTT, RabbitMQ")
     redis_db_client = RedisMonitor(redis_client=redis_obj,
                                 sql_database_client=db_client,
                                 configure=configure.RedisCnf)
     
     mqtt_publisher.connect(keep_alive=True)
-    mqtt_publisher.subscribe([configure.MQTTCnf.RATETOPIC])
+    # mqtt_publisher.subscribe([configure.MQTTCnf.RATETOPIC])
 
     await rabbit_publisher.connect(routing_key=['oee_data'])
     
+    logging.critical("Initialize coroutines...")
     # All coroutines defined
     production_coroutine = production_loop(rabbit_publisher, 
                                         mqtt_publisher, 
                                         redis_db_client, 
                                         db_client, 
-                                        plc_modbus)
+                                        all_plc_devices)
     quality_coroutine = quality_loop(rabbit_publisher, 
                                     mqtt_publisher, 
                                     redis_db_client, 
                                     db_client, 
-                                    plc_modbus)
+                                    all_plc_devices)
     
     machine_coroutine = machine_loop(rabbit_publisher, 
                                     mqtt_publisher, 
                                     redis_db_client, 
                                     db_client, 
-                                    plc_modbus)
-    device_coroutine = capture_store_data(redis_db_client,
+                                    all_plc_devices)
+    
+    device_coroutine = capture_loop(redis_db_client,
                                         db_client,
-                                        plc_modbus)
+                                        all_plc_devices)
+    logging.critical("Enter main loop ...")
     try:
         while True:
             await asyncio.gather(device_coroutine, 
@@ -86,29 +92,29 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
 
 async def capture_store_data(redis_db_client:RedisMonitor,
                              sql_client:SQLAlchemy,
-                             plc_modbus:list,
+                             plc_devices:list,
                              sleep_time = 1):
     logging.info("Execute capture_store_data()")
-    for machine in plc_modbus:
-        for device in machine.configure["LISTDEVICE"]:
+    for device in plc_devices:
+        for device_configure in device.configure["LISTDEVICE"]:
             try:
-                logging.debug(device)
-                redis_topic_name    = device["ID"] + "/raw"
+                logging.debug(device_configure)
+                redis_topic_name    = device_configure["ID"] + "/raw"
                 logging.debug(f"Topic name: {redis_topic_name}")
                 current_data = dict()
-                current_data = plc_modbus.read_modbus(current_data)
+                current_data = device.read_modbus(current_data)
                 
                 latest_data = redis_db_client.get_redis_data(redis_topic_name)
                 logging.info(f"Current: {current_data}")
                 logging.info(f"Old    : {latest_data}")
 
-                updatable = redis_db_client.compare(device["ID"], 
+                updatable = redis_db_client.compare(device_configure["ID"], 
                                                 latest_data, 
-                                                current_data[device["ID"]])
+                                                current_data[device_configure["ID"]])
                 if updatable:
                     logging.debug("Saving to SQL and Redis ..........")
-                    redis_db_client.save_to_sql(redis_topic_name, current_data[device["ID"]])
-                redis_db_client.save_to_redis(redis_topic_name, current_data[device["ID"]])
+                    redis_db_client.save_to_sql(redis_topic_name, current_data[device_configure["ID"]])
+                redis_db_client.save_to_redis(redis_topic_name, current_data[device_configure["ID"]])
                 
             except Exception as e:
                 logging.error(e.__str__())
@@ -117,13 +123,13 @@ async def capture_store_data(redis_db_client:RedisMonitor,
 
 async def capture_loop(redis_db_client:RedisMonitor,
                              sql_client:SQLAlchemy,
-                             plc_modbus:list,
+                             plc_devices:list,
                              sleep_time = 1):
     current_time =VnTimeStamps.now()
     while True:
         await capture_store_data(redis_db_client,
                                 db_client,
-                                plc_modbus)
+                                plc_devices)
         await asyncio.sleep(sleep_time)
         
         logging.critical("Finish  capture_loop()")
@@ -135,11 +141,11 @@ async def synchronize_all_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
                            redis_db_client:RedisMonitor,
                            sql_client:SQLAlchemy,
-                           plc_modbus:list,
+                           plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     
     logging.debug("Execute synchronize_data()")
-    for machine in plc_modbus:
+    for machine in plc_devices:
         for device in machine.configure["LISTDEVICE"]:
             data = None
             try:
@@ -227,11 +233,11 @@ async def synchronize_production_data(rabbit_publisher:rabbit_client.RabbitMQPub
                            mqtt_publisher:mqtt_client.MQTTClient, 
                            redis_db_client:RedisMonitor,
                            sql_client:SQLAlchemy,
-                           plc_modbus:list,
+                           plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     start_time = VnTimeStamps.now()
     logging.critical("Execute synchronize_production_data()")
-    for machine in plc_modbus:
+    for machine in plc_devices:
         for device in machine.configure["LISTDEVICE"]:
             data = None
             try:
@@ -279,13 +285,13 @@ async def synchronize_quality_data(rabbit_publisher:rabbit_client.RabbitMQPublis
                            mqtt_publisher:mqtt_client.MQTTClient, 
                            redis_db_client:RedisMonitor,
                            sql_client:SQLAlchemy,
-                           plc_modbus:UvMachine,
+                           plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     
     start_time = VnTimeStamps.now()
     logging.debug("Execute synchronize_data()")
     
-    for machine in plc_modbus:
+    for machine in plc_devices:
         for device in machine.configure["LISTDEVICE"]:
             data = None
             try:
@@ -341,12 +347,12 @@ async def synchronize_machine_data(rabbit_publisher:rabbit_client.RabbitMQPublis
                            mqtt_publisher:mqtt_client.MQTTClient, 
                            redis_db_client:RedisMonitor,
                            sql_client:SQLAlchemy,
-                           plc_modbus:UvMachine,
+                           plc_devices:UvMachine,
                            to_rabbit=False, to_mqtt=True):
     
     start_time = VnTimeStamps.now()
     logging.debug("Execute synchronize_machine_data()")
-    for machine in plc_modbus:
+    for machine in plc_devices:
         for device in machine.configure["LISTDEVICE"]:
             data = None
             try:
@@ -392,7 +398,7 @@ async def production_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
                            redis_db_client:RedisMonitor,
                            sql_client:SQLAlchemy,
-                           plc_modbus:UvMachine,
+                           plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     current_time =VnTimeStamps.now()
     while True:
@@ -400,7 +406,7 @@ async def production_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                                         mqtt_publisher, 
                                         redis_db_client, 
                                         db_client, 
-                                        plc_modbus,
+                                        plc_devices,
                                         to_rabbit=to_rabbit,
                                         to_mqtt=to_mqtt)
         try:
@@ -426,7 +432,7 @@ async def quality_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
                            redis_db_client:RedisMonitor,
                            sql_client:SQLAlchemy,
-                           plc_modbus:UvMachine,
+                           plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     current_time =VnTimeStamps.now()
     while True:
@@ -434,7 +440,7 @@ async def quality_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                                     mqtt_publisher, 
                                     redis_db_client, 
                                     db_client, 
-                                    plc_modbus)
+                                    plc_devices)
         try:
             sleep_time_data = redis_db_client.redis_client.hgetall(configure.RedisCnf.RATETOPIC)
             sleep_time = configure.GeneralConfig.DEFAULTRATE 
@@ -454,7 +460,7 @@ async def machine_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                            mqtt_publisher:mqtt_client.MQTTClient, 
                            redis_db_client:RedisMonitor,
                            sql_client:SQLAlchemy,
-                           plc_modbus:UvMachine,
+                           plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     current_time =VnTimeStamps.now()
     while True:
@@ -462,7 +468,7 @@ async def machine_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
                                     mqtt_publisher, 
                                     redis_db_client, 
                                     db_client, 
-                                    plc_modbus)
+                                    plc_devices)
         try:
             sleep_time_data = redis_db_client.redis_client.hgetall(configure.RedisCnf.RATETOPIC)
             sleep_time = configure.GeneralConfig.DEFAULTRATE 
