@@ -60,28 +60,28 @@ class RedisMonitor():
         return False
     
     def save_to_sql(self, device_id:str, current_data:dict):
-        timeNow = int(float(VnTimeStamps.now()))
+        timeNow = int(VnTimeStamps.now())
         current_data["timestamp"]  = timeNow
         data = MachineData(
             deviceId            = device_id,
-            machineStatus       = current_data['status'],
-            output              = current_data['output'],
-            input               = current_data['input'],
-            errorCode           = current_data["errorCode"],
-            envTemp             = -1,
-            envHum              = -1,
-            waterTemp           = -1,
-            waterpH             = -1,
-            timestamp           = current_data["timestamp"],
-            uv1                 = current_data["uv1"],
-            uv2                 = current_data["uv2"],
-            uv3                 = current_data["uv3"],
-            upperAirPressure    = -1,
-            lowerAirPressure    = -1,
-            gluePressure        = -1,
-            glueTemp            = -1,
-            isChanging          = current_data["changeProduct"]
-            )
+            machineStatus       = current_data['status'] if 'status' in current_data else -1,
+            output              = current_data['output'] if 'output' in current_data else -1,
+            input               = current_data['input'] if 'input' in current_data else -1,
+            errorCode           = current_data["errorCode"]if 'errorCode' in current_data else -1,
+            envTemp             = current_data["envTemp"]if 'envTemp' in current_data else -1,
+            envHum              = current_data["envHum"]if 'envHum' in current_data else -1,
+            waterTemp           = current_data["waterTemp"]if 'waterTemp' in current_data else -1,
+            waterpH             = current_data["waterpH"]if 'waterpH' in current_data else -1,
+            timestamp           = timeNow,
+            uv1                 = current_data["uv1"]if 'uv1' in current_data else -1,
+            uv2                 = current_data["uv2"]if 'uv2' in current_data else -1,
+            uv3                 = current_data["uv3"]if 'uv3' in current_data else -1,
+            upperAirPressure    = current_data["upperAirPressure"]if 'upperAirPressure' in current_data else -1,
+            lowerAirPressure    = current_data["lowerAirPressure"]if 'lowerAirPressure' in current_data else -1,
+            gluePressure        = current_data["gluePressure"]if 'gluePressure' in current_data else -1,
+            glueTemp            = current_data["glueTemp"]if 'glueTemp' in current_data else -1,
+            isChanging          = current_data["isChanging"]if 'isChanging' in current_data else -1
+        )
         
         self._to_sql(data, data)
     

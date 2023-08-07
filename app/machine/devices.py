@@ -27,7 +27,7 @@ class UvMachine(BaseModbusPLC):
                 unit    = device["UID"]
             )
 
-            logging.debug(f"{device['ID']} --- {r}")
+            logging.debug(f"{device['ID']} --- {reg}")
             data_reg = reg.registers
 
             # status and error code
