@@ -143,6 +143,12 @@ class MACHINE():
         if statusChange or outputChange or changingProduct or inputChange or error:
             timeNow = int(float(VnTimeStamps.now()))
             self.deviceData[deviceId]["timestamp"]  = timeNow
+            countRecords = MachineData.query.count()
+            if countRecords > GeneralConfig.LIMITRECORDS:
+                firstRecord = db.session.query(MachineData).first()
+                db.session.query(MachineData).filter_by(id=firstRecord.id).delete()
+                db.session.commit()
+                db.session.close()
             insertData = MachineData(
                 deviceId            = deviceId, 
                 machineStatus       = status,
