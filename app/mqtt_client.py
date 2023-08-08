@@ -198,12 +198,12 @@ class MQTTClient():
                 data.append(result)
                 
             self.client.publish(json.dumps(data), qos=1)
-            
+
         elif "/TLP/Thunghiem" in topic:
-            logging.critical("Start trial production period")
+            logging.critical(f"Start trial production period {topic}")
         
         else:
-            logging.warn(f"Unkown topic: {topic}")
+            logging.error(f"Unkown topic: {topic}")
         
         if message.retain==1:
             logging.debug("This is a retained message")
