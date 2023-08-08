@@ -4,12 +4,12 @@ import json
 import asyncio
 from flask_sqlalchemy import SQLAlchemy
 
-import app.mqtt_client as mqtt_client
+from app.mqtt_client import MQTTClient
 import configure 
-import app.rabbit_client as rabbit_client
+from app.rabbit_client import RabbitMQPublisher
 from app.machine.base_modbus import BaseModbusPLC
 from app.machine.devices import UvMachine, BoxFoldingMachine, CuttingMachine, PrintingMachine
-from app.redis_client import RedisMonitor
+from app.database_client import RedisMonitor
 from app.model.data_model import MachineData
 from app.utils import vntime as VnTimeStamps
 from app import db_client
@@ -23,8 +23,8 @@ async def publish_task(mqtt_handler, publish_topic, message, publish_interval):
 
 
 
-async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
-               mqtt_publisher: mqtt_client.MQTTClient,
+async def rostek_oee(rabbit_publisher: RabbitMQPublisher,
+               mqtt_publisher: MQTTClient,
                redis_obj):
     """
     Create instance of machine object and start related functions
@@ -60,24 +60,21 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
     production_coroutine = production_loop(rabbit_publisher, 
                                         mqtt_publisher, 
                                         redis_db_client, 
-                                        db_client, 
                                         all_plc_devices)
     quality_coroutine = quality_loop(rabbit_publisher, 
                                     mqtt_publisher, 
                                     redis_db_client, 
-                                    db_client, 
                                     all_plc_devices)
     
     machine_coroutine = machine_loop(rabbit_publisher, 
                                     mqtt_publisher, 
                                     redis_db_client, 
-                                    db_client, 
                                     all_plc_devices)
     
     device_coroutine = capture_loop(redis_db_client,
                                     mqtt_publisher,
-                                        db_client,
                                         all_plc_devices)
+    
     logging.critical("Enter main loop ...")
     try:
         while True:
@@ -96,8 +93,7 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
 
 
 async def capture_store_data(redis_db_client:RedisMonitor,
-                             mqtt_publisher:mqtt_client.MQTTClient,
-                             sql_client:SQLAlchemy,
+                             mqtt_publisher:MQTTClient,
                              plc_devices:list,
                              sleep_time = 1):
     """
@@ -136,8 +132,7 @@ async def capture_store_data(redis_db_client:RedisMonitor,
         await asyncio.sleep(sleep_time)
 
 async def capture_loop(redis_db_client:RedisMonitor,
-                       mqtt_publisher:mqtt_client.MQTTClient,
-                             sql_client:SQLAlchemy,
+                       mqtt_publisher:MQTTClient,
                              plc_devices:list,
                              sleep_time = 1):
     current_time =VnTimeStamps.now()
@@ -158,10 +153,9 @@ async def capture_loop(redis_db_client:RedisMonitor,
         current_time = VnTimeStamps.now()
 
 
-async def synchronize_all_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
-                           mqtt_publisher:mqtt_client.MQTTClient, 
+async def synchronize_all_data(rabbit_publisher:RabbitMQPublisher,
+                           mqtt_publisher:MQTTClient, 
                            redis_db_client:RedisMonitor,
-                           sql_client:SQLAlchemy,
                            plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     
@@ -250,12 +244,12 @@ async def synchronize_all_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
     logging.critical(f"production - Sleeping for: {configure.GeneralConfig.DEFAULTRATE}")
     await asyncio.sleep(configure.GeneralConfig.DEFAULTRATE)
 
-async def synchronize_production_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
-                           mqtt_publisher:mqtt_client.MQTTClient, 
+async def synchronize_production_data(rabbit_publisher:RabbitMQPublisher,
+                           mqtt_publisher:MQTTClient, 
                            redis_db_client:RedisMonitor,
-                           sql_client:SQLAlchemy,
                            plc_devices:list,
-                           to_rabbit=False, to_mqtt=True):
+                           to_rabbit=False, 
+                           to_mqtt=True):
     start_time = VnTimeStamps.now()
     logging.critical("Execute synchronize_production_data()")
     for machine in plc_devices:
@@ -302,10 +296,9 @@ async def synchronize_production_data(rabbit_publisher:rabbit_client.RabbitMQPub
     end_time = VnTimeStamps.now()
     logging.critical(f"Execute synchronize_production_data(), time: {end_time-start_time}")
 
-async def synchronize_quality_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
-                           mqtt_publisher:mqtt_client.MQTTClient, 
+async def synchronize_quality_data(rabbit_publisher:RabbitMQPublisher,
+                           mqtt_publisher:MQTTClient, 
                            redis_db_client:RedisMonitor,
-                           sql_client:SQLAlchemy,
                            plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     
@@ -364,12 +357,12 @@ async def synchronize_quality_data(rabbit_publisher:rabbit_client.RabbitMQPublis
     end_time = VnTimeStamps.now()
     logging.critical(f"Execute synchronize_quality_data(), time: {end_time-start_time}")
 
-async def synchronize_machine_data(rabbit_publisher:rabbit_client.RabbitMQPublisher,
-                           mqtt_publisher:mqtt_client.MQTTClient, 
+async def synchronize_machine_data(rabbit_publisher:RabbitMQPublisher,
+                           mqtt_publisher:MQTTClient, 
                            redis_db_client:RedisMonitor,
-                           sql_client:SQLAlchemy,
                            plc_devices:UvMachine,
-                           to_rabbit=False, to_mqtt=True):
+                           to_rabbit=False, 
+                           to_mqtt=True):
     
     start_time = VnTimeStamps.now()
     logging.debug("Execute synchronize_machine_data()")
@@ -415,10 +408,9 @@ async def synchronize_machine_data(rabbit_publisher:rabbit_client.RabbitMQPublis
     end_time = VnTimeStamps.now()
     logging.critical(f"Execute synchronize_machine_data(), time: {end_time-start_time}")
 
-async def production_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
-                           mqtt_publisher:mqtt_client.MQTTClient, 
+async def production_loop(rabbit_publisher:RabbitMQPublisher,
+                           mqtt_publisher:MQTTClient, 
                            redis_db_client:RedisMonitor,
-                           sql_client:SQLAlchemy,
                            plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     current_time =VnTimeStamps.now()
@@ -450,12 +442,12 @@ async def production_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
         logging.critical(f"production_loop() time: {VnTimeStamps.now() - current_time}")
         current_time = VnTimeStamps.now()
 
-async def quality_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
-                           mqtt_publisher:mqtt_client.MQTTClient, 
+async def quality_loop(rabbit_publisher:RabbitMQPublisher,
+                           mqtt_publisher:MQTTClient, 
                            redis_db_client:RedisMonitor,
-                           sql_client:SQLAlchemy,
                            plc_devices:list,
-                           to_rabbit=False, to_mqtt=True):
+                           to_rabbit=False, 
+                           to_mqtt=True):
     current_time =VnTimeStamps.now()
     while True:
         await synchronize_quality_data(rabbit_publisher, 
@@ -482,10 +474,9 @@ async def quality_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
         logging.critical(f"quality_loop() time: {VnTimeStamps.now() - current_time}")
         current_time = VnTimeStamps.now()
 
-async def machine_loop(rabbit_publisher:rabbit_client.RabbitMQPublisher,
-                           mqtt_publisher:mqtt_client.MQTTClient, 
+async def machine_loop(rabbit_publisher:RabbitMQPublisher,
+                           mqtt_publisher:MQTTClient, 
                            redis_db_client:RedisMonitor,
-                           sql_client:SQLAlchemy,
                            plc_devices:list,
                            to_rabbit=False, to_mqtt=True):
     current_time =VnTimeStamps.now()
