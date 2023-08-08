@@ -77,9 +77,9 @@ def sync_production_data():
             if data:
                 sendData = {
                     "record_type"   : "sx",
-                    "type"          : data["changeProduct"]     if "changeProduct" in data else -1,
-                    "input"         : data["input"]             if "input"    in data else -1,
-                    "output"        : data["output"]            if "output"   in data else -1,
+                    "type"          : data["changeProduct"]     if "changeProduct"  in data else -1,
+                    "input"         : data["input"]             if "input"          in data else -1,
+                    "output"        : data["output"]            if "output"         in data else -1,
                     "machine_id"    : device["ID"],
                     "timestamp"     : timeNow,
                 }

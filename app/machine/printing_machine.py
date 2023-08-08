@@ -30,7 +30,7 @@ class PRINTING_MACHINE(MACHINE):
         # logging.error(f"ChangeProduct - {r.registers[11]}")
         if int(registerData[0]) == 1:
             status = STATUS.RUN
-        elif int(registerData[1]) == 2:
+        elif int(registerData[0]) == 2:
             status = STATUS.IDLE
         else:
             errorCode = 1
