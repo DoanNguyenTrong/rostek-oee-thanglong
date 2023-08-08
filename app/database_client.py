@@ -13,7 +13,7 @@ class RedisMonitor():
         self.sql_database_client = sql_database_client
         self.MachineData = MachineDataModel
 
-    def get_redis_data(self, topic:str):
+    def get_redis_data(self, topic:str) -> dict:
         """
         Load old data from redis
         """
@@ -64,6 +64,26 @@ class RedisMonitor():
         except Exception as e:
             logging.error(e.__str__())
         return False
+    
+    def extract_dict_by_keys(self, 
+                             input_data:dict, 
+                             input_keys:list,
+                             output_keys:list,
+                             default=-1) -> dict:
+        """
+            Extract a subset of key-value pairs of a dictionary,
+            assign to default values if not exist in original dict
+        """
+        logging.debug(f"Extracting by keys: {input_keys}")
+        
+        output_data = dict()
+        if len(input_keys) == len(output_keys):
+            for idx, key in enumerate(input_keys):
+                if isinstance(key, str):
+                    output_data[output_keys[idx]] = input_data[key] if key in input_data else default
+        else:
+            logging.error(f"Input and output keys are different in length: {len(input_keys)} vs {len(output_keys)}")
+        return output_data
     
     def save_to_sql(self, device_id:str, current_data:dict):
         timeNow = int(VnTimeStamps.now())
