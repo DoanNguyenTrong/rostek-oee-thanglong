@@ -25,17 +25,6 @@ class MQTTClient():
                                         password=self.configures.MQTT_PASSWORD)
         
         self.subscribe_topic = []  # Store the topic for re-subscription
-
-        #self.client.on_log        = on_log
-        
-        # # username and password
-        # if not credential == None:
-        #     logging.info( "Login a network with credential verification" )
-        #     try:
-        #         self.client.username_pw_set(username=credential[0],password=credential[1])
-        #     except Exception as e:
-        #         logging.error(e.__str__())
-        #         logging.error(f"Credential: {credential}")
     
     def connect(self, keep_alive=True, sleeptime=2, log_enable=False):
         """Connect to broker:port"""

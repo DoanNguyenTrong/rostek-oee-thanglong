@@ -114,8 +114,7 @@ async def capture_store_data(redis_db_client:RedisMonitor,
                 logging.info(f"Current: {current_data}")
                 logging.info(f"Old    : {latest_data}")
 
-                updatable = redis_db_client.compare(device_configure["ID"],
-                                                    mqtt_publisher,
+                updatable = redis_db_client.compare(mqtt_publisher,
                                                 latest_data, 
                                                 current_data[device_configure["ID"]])
                 
@@ -273,12 +272,12 @@ async def synchronize_production_data(rabbit_publisher:RabbitMQPublisher,
     start_time = VnTimeStamps.now()
     logging.critical("Execute synchronize_production_data()")
     for machine in plc_devices:
-        for device in machine.configure["LISTDEVICE"]:
+        for device_configure in machine.configure["LISTDEVICE"]:
             data = None
             try:
                 # data = sql_client.session.query(UnsyncedMachineData).order_by(UnsyncedMachineData.id.desc()).first()
                 # sql_client.session.close()
-                redis_topic = device["ID"] + "/raw"
+                redis_topic = device_configure["ID"] + "/raw"
                 data = redis_db_client.get_redis_data(redis_topic)
 
             except Exception as e:
@@ -295,7 +294,7 @@ async def synchronize_production_data(rabbit_publisher:RabbitMQPublisher,
                                                                            input_keys=["input", "output"],
                                                                            output_keys=["input", "output"])
                     production_data["record_type"] = "sx"
-                    production_data["machine_id"] = device["ID"]
+                    production_data["machine_id"] = device_configure["ID"]
                     production_data["timestamp"] = current_time
                     
                     if to_mqtt:
@@ -324,12 +323,12 @@ async def synchronize_quality_data(rabbit_publisher:RabbitMQPublisher,
     logging.debug("Execute synchronize_data()")
     
     for machine in plc_devices:
-        for device in machine.configure["LISTDEVICE"]:
+        for device_configure in machine.configure["LISTDEVICE"]:
             data = None
             try:
                 # data = sql_client.session.query(UnsyncedMachineData).order_by(UnsyncedMachineData.id.desc()).first()
                 # sql_client.session.close()
-                redis_topic = device["ID"] + "/raw"
+                redis_topic = device_configure["ID"] + "/raw"
                 data = redis_db_client.get_redis_data(redis_topic)
 
             except Exception as e:
@@ -349,7 +348,7 @@ async def synchronize_quality_data(rabbit_publisher:RabbitMQPublisher,
                                                                         input_keys=input_keys,
                                                                         output_keys=output_keys)
                     quality_data["record_type"] = "cl"
-                    quality_data["machine_id"] = device["ID"]
+                    quality_data["machine_id"] = device_configure["ID"]
                     quality_data["timestamp"] = current_time
                     
                     if to_mqtt:
@@ -377,12 +376,12 @@ async def synchronize_machine_data(rabbit_publisher:RabbitMQPublisher,
     start_time = VnTimeStamps.now()
     logging.debug("Execute synchronize_machine_data()")
     for machine in plc_devices:
-        for device in machine.configure["LISTDEVICE"]:
+        for device_configure in machine.configure["LISTDEVICE"]:
             data = None
             try:
                 # data = sql_client.session.query(UnsyncedMachineData).order_by(UnsyncedMachineData.id.desc()).first()
                 # sql_client.session.close()
-                redis_topic = device["ID"] + "/raw"
+                redis_topic = device_configure["ID"] + "/raw"
                 data = redis_db_client.get_redis_data(redis_topic)
 
             except Exception as e:
@@ -399,7 +398,7 @@ async def synchronize_machine_data(rabbit_publisher:RabbitMQPublisher,
                                                                            input_keys=["status", "status"],
                                                                            output_keys=["type", "errorCode"])
                     machine_data["record_type"] = "tb"
-                    machine_data["machine_id"] = device["ID"]
+                    machine_data["machine_id"] = device_configure["ID"]
                     machine_data["timestamp"] = current_time
                     
                     if to_mqtt:

@@ -18,8 +18,6 @@ class RedisMonitor():
         Load old data from redis
         """
         logging.debug("Execute: get_redis_data()")
-        # rawTopic    = device["ID"] + "/raw"
-        # TODO: why read all, can be the latest only?
         try:
             logging.debug(f"Query Redis topic:{topic}")
             redis_data  = self.redis_client.hgetall(topic)
@@ -44,20 +42,23 @@ class RedisMonitor():
         logging.debug(f"Latest data: {redis_data}")
         return redis_data
     
-    def compare(self, device_id:str,
+    def compare(self,
                 mqtt_publisher:MQTTClient, 
                 redis_data:dict, 
                 current_data:dict):
-        
+        """
+            Compare the difference between current and previous data 
+        """
         logging.debug("Execute: compare()")
         logging.debug(f"Current: {current_data}")
         logging.debug(f"Redis  : {redis_data}")
+        
         try:
-            status_changed    = self._is_status_change      (redis_data, current_data["status"])
-            output_changed    = self._is_output_change      (redis_data, current_data["output"])
-            input_changed     = self._is_input_change       (redis_data, current_data["input"])
-            product_changed   = self._is_changing_product   (redis_data, current_data["changeProduct"], mqtt_publisher)
-            error             = self._is_error              (redis_data, current_data["errorCode"])
+            status_changed    = True if redis_data["status"] !=current_data["status"] else False
+            output_changed    = True if redis_data["output"] != current_data["output"] else False
+            input_changed     = True if redis_data["input"] != current_data["input"] else False
+            error             = True if redis_data["errorCode"] != current_data["errorCode"] else False
+            product_changed   = self._is_changing_product(redis_data, current_data["changeProduct"], mqtt_publisher)
             
             if status_changed or output_changed or input_changed or product_changed or error:
                 return True
@@ -189,12 +190,14 @@ class RedisMonitor():
             return True
         else:
             return False
+    
     def _generate_start_production_msg(self, deviceId, now):
         return {
             "record_type"   : "tsl",
             "machine_id"    : deviceId,
             "timestamp"     : now
         }
+    
     def _is_error(self, data:dict, errorCode):
         """
         Check if error
