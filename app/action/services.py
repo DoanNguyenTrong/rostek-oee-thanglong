@@ -250,11 +250,9 @@ async def synchronize_all_data(rabbit_publisher:RabbitMQPublisher,
                         logging.debug("Sending data to rabbitMQ")
                         await rabbit_publisher.send_message(json.dumps(data))
 
-                    
                     # sql_client.session.query(UnsyncedMachineData).filter_by(timestamp=result.timestamp).delete()
                     # sql_client.session.commit()
                     # sql_client.session.close()
-                    
                     
                     logging.debug("Completed!")
                 except Exception as e:
@@ -291,16 +289,14 @@ async def synchronize_production_data(rabbit_publisher:RabbitMQPublisher,
                 logging.debug("Data need to be sent:")
                 logging.debug(data)
                 try:
-                    timeNow = int(float(VnTimeStamps.now()))
+                    current_time = int(float(VnTimeStamps.now()))
 
-                    production_data = {
-                            "record_type"   : "sx",
-                            "input"         : data["input"]     if "input"    in data else -1,
-                            "output"        : data["output"]    if "output"   in data else -1,
-                            "machine_id"    : device["ID"],
-                            "timestamp"     : timeNow,
-                        }
-                    
+                    production_data = redis_db_client.extract_dict_by_keys(input_data=data, 
+                                                                           input_keys=["input", "output"],
+                                                                           output_keys=["input", "output"])
+                    production_data["record_type"] = "sx"
+                    production_data["machine_id"] = device["ID"]
+                    production_data["timestamp"] = current_time
                     
                     if to_mqtt:
                         logging.debug("Publish to mqtt....")
@@ -344,25 +340,17 @@ async def synchronize_quality_data(rabbit_publisher:RabbitMQPublisher,
                 logging.debug("Data need to be sent:")
                 logging.debug(data)
                 try:
-                    timeNow = int(float(VnTimeStamps.now()))
+                    current_time = int(float(VnTimeStamps.now()))
 
-                    quality_data = {
-                            "record_type"   : "cl",
-                            "w_temp"        : data["waterTemp"] if "waterTemp"  in data else -1,
-                            "ph"            : data["waterpH"]   if "waterpH"    in data else -1,
-                            "t_ev"          : data["envTemp"]   if "envTemp"    in data else -1,
-                            "e_hum"         : data["envHum"]    if "envHum"     in data else -1,
-                            "uv1"           : data["uv1"]       if "uv1"        in data else -1,
-                            "uv2"           : data["uv2"]       if "uv2"        in data else -1,
-                            "uv3"           : data["uv3"]       if "uv3"        in data else -1,
-                            "p_cut"         : data["p_cut"]     if "p_cut"      in data else -1,
-                            "p_conv1"       : data["p_conv"]    if "p_conv"     in data else -1,
-                            "p_conv2"       : data["p_conv"]    if "p_conv"     in data else -1,
-                            "p_gun"         : data["p_gun"]     if "p_gun"      in data else -1,
-                            "machine_id"    : device["ID"],
-                            "timestamp"  : timeNow
-                        }
+                    input_keys = ["waterTemp", "waterpH", "envTemp", "envHum", "uv1", "uv2", "uv3", "p_cut", "p_conv", "p_conv", "p_gun"]
+                    output_keys = ["w_temp", "ph", "t_ev", "e_hum", "uv1", "uv2", "uv3", "p_cut", "p_conv1", "p_conv2", "p_gun"]
                     
+                    quality_data = redis_db_client.extract_dict_by_keys(input_data=data,
+                                                                        input_keys=input_keys,
+                                                                        output_keys=output_keys)
+                    quality_data["record_type"] = "cl"
+                    quality_data["machine_id"] = device["ID"]
+                    quality_data["timestamp"] = current_time
                     
                     if to_mqtt:
                         mqtt_publisher.publish(topic= configure.MQTTCnf.QUALITYTOPIC,
@@ -405,15 +393,14 @@ async def synchronize_machine_data(rabbit_publisher:RabbitMQPublisher,
                 logging.debug("Data need to be sent:")
                 logging.debug(data)
                 try:
-                    timeNow = int(float(VnTimeStamps.now()))
+                    current_time = int(float(VnTimeStamps.now()))
 
-                    machine_data = {
-                            "record_type"   : "tb", 
-                            "status"        : data["status"],
-                            "type"          : data["errorCode"],
-                            "machine_id"    : device["ID"],
-                            "timestamp"  : timeNow,
-                        }
+                    machine_data = redis_db_client.extract_dict_by_keys(input_data=data, 
+                                                                           input_keys=["status", "status"],
+                                                                           output_keys=["type", "errorCode"])
+                    machine_data["record_type"] = "tb"
+                    machine_data["machine_id"] = device["ID"]
+                    machine_data["timestamp"] = current_time
                     
                     if to_mqtt:
                         mqtt_publisher.publish(topic= configure.MQTTCnf.MACHINETOPIC,
