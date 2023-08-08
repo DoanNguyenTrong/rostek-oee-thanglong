@@ -50,7 +50,8 @@ async def rostek_oee(rabbit_publisher: rabbit_client.RabbitMQPublisher,
     mqtt_publisher.add_userdata("sql_model", data_obj=MachineData, print_data=True)
     
     mqtt_publisher.connect(keep_alive=True)
-    # mqtt_publisher.subscribe([configure.MQTTCnf.RATETOPIC])
+    # mqtt_publisher.subscribe([configure.MQTTCnf.RATETOPIC,
+    #                           configure.MQTTCnf.RECALLTOPIC])
 
     await rabbit_publisher.connect(routing_key=['oee_data'])
     

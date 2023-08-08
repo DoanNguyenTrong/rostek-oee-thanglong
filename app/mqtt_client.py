@@ -6,48 +6,6 @@ from configure import MQTTCnf, RedisCnf
 from sqlalchemy import and_
 
 
-def mqtt_args_parser(parser):
-    """Add parser augument for MQTT options."""
-    parser.add_argument('--name', type=str, default=None,
-                        help='name of client')
-    parser.add_argument('--ip', type=str, default=None,
-                        help='broker\'s ip, e.g., 192.168.0.1')
-    parser.add_argument('--pub', type=str, default=None,
-                        help='topic to be published')
-    parser.add_argument('--sub', type=str, default=None,
-                        help='topic to be subscribed')
-    parser.add_argument('--freq', type=int, default=60,
-                        help='Data recording frequency')
-    parser.add_argument('--sensor_type', type=str, default=None,
-                        help='Type of the sensor')
-    return parser
-
-def mqtt_args_json(args, configs):
-    """
-        Load configuration params for mqtt objects
-    """
-    if "name" in configs and not configs["name"] == "None":
-        logging.info("name: %s" %configs["name"])
-        args.name = configs["name"]   
-    if "ip" in configs and not configs["ip"] == "None":
-        logging.info("ip: %s" %configs["ip"])
-        args.ip = configs["ip"]
-    if "pub" in configs and not configs["pub"] == "None":
-        logging.info("pub: %s" %configs["pub"])
-        args.pub = configs["pub"]
-    if "sub" in configs and not configs["sub"] == "None":
-        logging.info("sub: %s" %configs["sub"])
-        args.sub = configs["sub"]
-    if "freq" in configs and not configs["freq"] == 0:
-        logging.info("freq: %s" %str(configs["freq"]))
-        args.freq = configs["freq"]
-    if "sensor_type" in configs and not configs["sensor_type"] == 'None':
-        logging.info("sensor_type: %s" %str(configs["sensor_type"]))
-        args.sensor_type = configs["sensor_type"]
-    return args
-
-
-
 class MQTTClient():
     __instance = None
     
@@ -165,9 +123,14 @@ class MQTTClient():
             self.client.connected_flag=True #set flag
             self.client.reconnecting_flag    = False # TODO: unknown
             logging.info("Connected OK Returned code: %s \n"%rc)
+            logging.critical(f'Subscribing to topic TLP/Recall')
             logging.critical(f'Subscribing to topic /TLP/Fre')
-            self.client.subscribe("/TLP/Fre", qos=2)
-            self.client.subscribe("/requestData", qos=2)
+            # topics = [("/TLP/Fre", 2), ("TLP/Recall", 2)]
+            topics = [("/TLP/Fre", 2)]
+            self.client.subscribe(topics)
+            self.client.subscribe('TLP/Recall', 2)
+
+
         else:
             logging.info("Bad connection Returned code: %s \n"%rc)
 
@@ -219,13 +182,14 @@ class MQTTClient():
                 redisClient.hset(RedisCnf.RATETOPIC, "machine", received_data["frequency"])
                 logging.critical("Change machine freq")
 
-        elif "/requestData" in topic:
+        elif "/TLP/Recall" in topic:
             sql_model = userdata["sql_model"]
-            timeFrom    = data["from"]
-            timeTo      = data["to"]
+            timeFrom    = received_data["from"]
+            timeTo      = received_data["to"]
             logging.critical(f"Data being requested from {timeFrom}, to {timeTo}")
 
             data = []
+
             results = sql_model.query.filter(and_(sql_model.timestamp >= timeFrom,
                                                   sql_model.timestamp <= timeTo, 
                                                   sql_model.deviceId == deviceId)).all()
@@ -234,7 +198,10 @@ class MQTTClient():
                 data.append(result)
                 
             self.client.publish(json.dumps(data), qos=1)
-
+            
+        elif "/TLP/Thunghiem" in topic:
+            logging.critical("Start trial production period")
+        
         else:
             logging.warn(f"Unkown topic: {topic}")
         
