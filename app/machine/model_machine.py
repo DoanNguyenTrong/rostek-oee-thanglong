@@ -111,7 +111,7 @@ class MACHINE():
             count   = device["COUNT"], 
             unit    = device["UID"]
         )
-        # logging.warning(f"{device['ID']} --- {r}")
+        logging.warning(f"{device['ID']} --- {r}")
         registerData = r.registers
         # logging.error(f"output - {r.registers[1]}")
         # logging.error(f"Status - {r.registers[5]}")

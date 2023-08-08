@@ -21,10 +21,16 @@ class BOX_FOLDING_MACHINE(MACHINE):
             count   = device["COUNT1"], 
             unit    = device["UID"]
         )
+        r2 = self._modbusMaster.read_holding_registers(
+            address = device["ADDRESS2"], 
+            count   = device["COUNT2"], 
+            unit    = device["UID"]
+        )
         
-        # logging.warning(f"{device['ID']} --- {r}")
+        logging.warning(f"{device['ID']} --- {r}")
         registerData    = r.registers
         registerData1   = r1.registers
+        registerData2   = r2.registers
         # logging.error(f"output - {r.registers[1]}")
         # logging.error(f"Status - {r.registers[5]}")
         # logging.error(f"ChangeProduct - {r.registers[11]}")
@@ -45,7 +51,7 @@ class BOX_FOLDING_MACHINE(MACHINE):
         gluePressure        = int(registerData1[8])/10
         glueTemp            = int(registerData1[12])/10
 
-        input           = int(registerData[28])
+        input           = int(registerData2[0])
         output          = int(registerData[12])
         changeProduct   = int(registerData[8])
 

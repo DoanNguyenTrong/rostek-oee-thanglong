@@ -3,7 +3,7 @@ import logging, time
 
 modbusMaster = ModbusSerialClient(
                 method      = "rtu", 
-                port        = "/dev/ttyAMA4", 
+                port        = "/dev/ttyAMA1", 
                 timeout     = 1, 
                 baudrate    = 9600
             )
@@ -14,7 +14,7 @@ while True:
         r = modbusMaster.read_holding_registers(
                     address = 4616, 
                     count   = 1, 
-                    unit    = 4
+                    unit    = 2
                 )
         print(r.registers)
         time.sleep(1)

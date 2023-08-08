@@ -11,14 +11,28 @@ class UV_MACHINE(MACHINE):
         """
         Make request to read modbus and parse data 
         """
+        # logging.critical("Read here")
         r = self._modbusMaster.read_holding_registers(
             address = device["ADDRESS"], 
             count   = device["COUNT"], 
             unit    = device["UID"]
         )
+        r1 = self._modbusMaster.read_holding_registers(
+            address = device["ADDRESS1"], 
+            count   = device["COUNT1"], 
+            unit    = device["UID"]
+        )
+        r2 = self._modbusMaster.read_holding_registers(
+            address = device["ADDRESS2"], 
+            count   = device["COUNT2"], 
+            unit    = device["UID"]
+        )
         
-        # logging.warning(f"{device['ID']} --- {r.registers}")
+        logging.warning(f"{device['ID']} --- {r.registers}")
         registerData    = r.registers
+        registerData1   = r1.registers
+        registerData2   = r2.registers
+        # logging.error(f"{device['ID']} --- {r1.registers}")
         # logging.error(f"output - {r.registers[1]}")
         # logging.error(f"Status - {r.registers[5]}")
         # logging.error(f"ChangeProduct - {r.registers[11]}")
@@ -37,9 +51,9 @@ class UV_MACHINE(MACHINE):
         input           = int(self._parse_register_data(r.registers, 12, 13))
         output          = int(self._parse_register_data(r.registers, 4, 5))
         changeProduct   = int(registerData[8])
-        uv3             = int(registerData[20])
-        uv2             = int(registerData[32])
-        uv1             = int(registerData[44])
+        uv3             = int(registerData1[0])
+        uv2             = int(registerData2[1])
+        uv1             = int(registerData2[13])
 
         self.deviceData[deviceId]["uv3"]  = uv3
         self.deviceData[deviceId]["uv2"]  = uv2

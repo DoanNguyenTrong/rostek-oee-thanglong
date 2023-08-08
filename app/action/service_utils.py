@@ -17,12 +17,12 @@ def init_objects():
     Create instance of machine object and start related functions
     """
     logging.warning("Starting program")
-    # printingMachine     = PRINTING_MACHINE(redisClient, printingMachineConfigure)
-    # boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
-    # cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
+    printingMachine     = PRINTING_MACHINE(redisClient, printingMachineConfigure)
+    boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
+    cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
     uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
-    # start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
-    start_service(uvMachine)
+    start_service(boxFoldingMachine, cuttingMachine, uvMachine)
+    # start_service(boxFoldingMachine)
 
 def start_service(*args):
     """
@@ -51,7 +51,7 @@ def start_service(*args):
     schedule.every(qualityRate).seconds.do(sync_quality_data)
     schedule.every(productionRate).seconds.do(sync_production_data)
     workers.add_task(start_scheduling_thread)
-#     start_sync_service(machineRate = sync_machine_data, qualityRate = sync_quality_data, productionRate = sync_production_data)
+    # start_sync_service(machineRate = sync_machine_data, qualityRate = sync_quality_data, productionRate = sync_production_data)
 
 # def start_sync_service(**kwargs):
 #     for rate,service in kwargs:
