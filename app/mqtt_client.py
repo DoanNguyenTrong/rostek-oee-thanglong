@@ -194,7 +194,7 @@ class MQTTClient():
             results = sql_model.query.filter(and_(sql_model.timestamp >= timeFrom,
                                                   sql_model.timestamp <= timeTo, 
                                                   sql_model.deviceId == machine_id)).all()
-            
+            logging.critical(f"Raw data {results}")
             data = []
             to_topic = ''
             if 'sx' in record_type:
