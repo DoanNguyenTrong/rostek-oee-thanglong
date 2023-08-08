@@ -160,10 +160,8 @@ class MQTTClient():
         """
         received_data    = json.loads(str(message.payload.decode("utf-8")))
         message_topic   = str(message.topic)
-        deviceId = str(message_topic.split("/")[2]) 
 
         topic   = str(message.topic)
-        deviceId = str(topic.split("/")[2])
         logging.critical("Topic: {}, msg: {}, retained: {}".format(message_topic, \
                                                             message.payload.decode("utf-8"), \
                                                             message.retain))
@@ -184,24 +182,83 @@ class MQTTClient():
 
         elif "/TLP/Recall" in topic:
             sql_model = userdata["sql_model"]
+            
             timeFrom    = received_data["from"]
             timeTo      = received_data["to"]
+            record_type = received_data["record_type"]
+            machine_id = received_data["machine_id"]
+
             logging.critical(f"Data being requested from {timeFrom}, to {timeTo}")
 
-            data = []
 
             results = sql_model.query.filter(and_(sql_model.timestamp >= timeFrom,
                                                   sql_model.timestamp <= timeTo, 
-                                                  sql_model.deviceId == deviceId)).all()
-            for result in results:
-                logging.critical(f"Querried data: {result}")
-                data.append(result)
+                                                  sql_model.deviceId == machine_id)).all()
+            
+            data = []
+            to_topic = ''
+            if 'sx' in record_type:
+                to_topic = MQTTCnf.PRODUCTIONTOPIC
                 
-            self.client.publish(json.dumps(data), qos=1)
+                for result in results:
+                    logging.critical(f"Querried data: {result}")
+                    production_data = {
+                            "record_type"   : "sx",
+                            "input"         : result["input"]       if "input"    in result else -1,
+                            "output"        : result["output"]      if "output"   in result else -1,
+                            "machine_id"    : result["deviceId"]    if "deviceId"   in result else -1,
+                            "timestamp"     : result['timestamp']    if "timestamp"   in result else -1,
+                        }
+                    
+                    data.append(production_data)
+                    
+            elif 'cl' in record_type:
+                to_topic = MQTTCnf.QUALITYTOPIC
+                
+                for result in results:
+                    logging.critical(f"Querried data: {result}")
+                    quality_data = {
+                            "record_type"   : "cl",
+                            "w_temp"        : result["waterTemp"] if "waterTemp"  in result else -1,
+                            "ph"            : result["waterpH"]   if "waterpH"    in result else -1,
+                            "t_ev"          : result["envTemp"]   if "envTemp"    in result else -1,
+                            "e_hum"         : result["envHum"]    if "envHum"     in result else -1,
+                            "uv1"           : result["uv1"]       if "uv1"        in result else -1,
+                            "uv2"           : result["uv2"]       if "uv2"        in result else -1,
+                            "uv3"           : result["uv3"]       if "uv3"        in result else -1,
+                            "p_cut"         : result["p_cut"]     if "p_cut"      in result else -1,
+                            "p_conv1"       : result["p_conv"]    if "p_conv"     in result else -1,
+                            "p_conv2"       : result["p_conv"]    if "p_conv"     in result else -1,
+                            "p_gun"         : result["p_gun"]     if "p_gun"      in result else -1,
+                            "machine_id"    : result["deviceId"]    if "deviceId"   in result else -1,
+                            "timestamp"     : result['timestamp']    if "timestamp"   in result else -1,
+                        }
+                    
+                    data.append(quality_data)
+            elif 'tb' in record_type:
+                to_topic = MQTTCnf.MACHINETOPIC
+                
+                for result in results:
+                    logging.critical(f"Querried data: {result}")
+                    machine_data = {
+                            "record_type"   : "cl",
+                            "status"        : result["status"] if "status"  in result else -1,
+                            "type"            : result["errorCode"]   if "errorCode"    in result else -1,
+                            "machine_id"    : result["deviceId"]    if "deviceId"   in result else -1,
+                            "timestamp"     : result['timestamp']    if "timestamp"   in result else -1,
+                        }
+                    
+                    data.append(machine_data)
+            else:
+                logging.error(f"Unknow record type: {record_type}")
+              
+            
+            if to_topic is not '':
+                self.publish(to_topic, json.dumps(data), qos=1)
 
         elif "/TLP/Thunghiem" in topic:
             logging.critical(f"Start trial production period {topic}")
-        
+            logging.critical("Doing NOTHING for now")
         else:
             logging.error(f"Unkown topic: {topic}")
         

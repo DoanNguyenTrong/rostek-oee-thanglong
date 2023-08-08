@@ -126,7 +126,7 @@ async def capture_store_data(redis_db_client:RedisMonitor,
 
                 if updatable:
                     logging.debug("Saving to SQL ...")
-                    redis_db_client.save_to_sql(redis_topic_name, current_data[device_configure["ID"]])
+                    redis_db_client.save_to_sql(device_configure["ID"], current_data[device_configure["ID"]])
                 
                 redis_db_client.save_to_redis(redis_topic_name, current_data[device_configure["ID"]])
                 
