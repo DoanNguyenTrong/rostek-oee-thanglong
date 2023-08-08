@@ -59,22 +59,26 @@ class FLASK(object):
 
 uvMachineConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA4",
+        "PORT"          :  "/dev/ttyAMA3",
         "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
                 "ID"        : "SN_UV",
                 "UID"       : 3,
-                "COUNT"     : 45,
+                "COUNT"     : 17,
                 "ADDRESS"   : 4596,
+                "ADDRESS1"  : 4616,
+                "ADDRESS2"  : 4627,
+                "COUNT1"    : 11,
+                "COUNT2"    : 14,
             }
         ]
     }
 
 printingMachineConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA4",
+        "PORT"          :  "/dev/ttyAMA2",
         "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
@@ -91,35 +95,38 @@ printingMachineConfigure = {
 
 boxFoldingMachineConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA2",
+        "PORT"          :  "/dev/ttyAMA1",
         "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
                 "ID"        : "ACE70CS",
-                "UID"       : 1,
-                "COUNT"     : 12,
+                "UID"       : 2,
+                "COUNT"     : 17,
                 "ADDRESS"   : 4596,
-                "COUNT1"    : 12,
+                "COUNT1"    : 13,
                 "ADDRESS1"  : 4676,
+                "ADDRESS2"  : 4624,
+                "COUNT2"    : 1,
             }
         ]
     }
  
 cuttingMachineConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA1",
+        "PORT"          :  "/dev/ttyAMA4",
         "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
                 "ID"        : "MK1060MF",
-                "UID"       : 1,
+                "UID"       : 4,
                 "COUNT"     : 17,
                 "ADDRESS"   : 4596,
             }
         ]
     }
+
 
 listConfig = [uvMachineConfigure]
 # , printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]

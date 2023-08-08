@@ -21,35 +21,77 @@ class UvMachine(BaseModbusPLC):
                                                                                  device["COUNT"], 
                                                                                  device["UID"]))
             device_id = device["ID"]
-            reg = self.modbus_client.read_holding_registers(
+            # reg = self.modbus_client.read_holding_registers(
+            #     address = device["ADDRESS"], 
+            #     count   = device["COUNT"], 
+            #     unit    = device["UID"]
+            # )
+
+            # logging.debug(f"{device['ID']} --- {reg}")
+            # data_reg = reg.registers
+
+            # # status and error code
+            # if int(data_reg[5]) == 1:
+            #     status = STATUS.RUN
+            # elif int(data_reg[5]) == 2:
+            #     status = STATUS.IDLE
+            # else:
+            #     status = STATUS.ERROR
+
+            # if int(data_reg[5]) == 1:
+            #     errorCode = 1
+            # else:
+            #     errorCode = 0
+
+            # # parsing data
+            # input_data           = int(self._parse_register_data(reg.registers, 12, 13))
+            # output_data          = int(self._parse_register_data(reg.registers, 4, 5))
+            # changeProduct_data   = int(data_reg[8])
+            # uv3_data             = int(data_reg[20])
+            # uv2_data             = int(data_reg[32])
+            # uv1_data             = int(data_reg[44])
+
+
+
+            reg = self._modbusMaster.read_holding_registers(
                 address = device["ADDRESS"], 
                 count   = device["COUNT"], 
                 unit    = device["UID"]
             )
+            reg1 = self._modbusMaster.read_holding_registers(
+                address = device["ADDRESS1"], 
+                count   = device["COUNT1"], 
+                unit    = device["UID"]
+            )
+            reg2 = self._modbusMaster.read_holding_registers(
+                address = device["ADDRESS2"], 
+                count   = device["COUNT2"], 
+                unit    = device["UID"]
+            )
+            
+            # logging.warning(f"{device['ID']} --- {r.registers}")
+            registerData    = reg.registers
+            registerData1   = reg1.registers
+            registerData2   = reg2.registers
 
-            logging.debug(f"{device['ID']} --- {reg}")
-            data_reg = reg.registers
-
-            # status and error code
-            if int(data_reg[5]) == 1:
+            if int(registerData[0]) == 1:
                 status = STATUS.RUN
-            elif int(data_reg[5]) == 2:
+            elif int(registerData[0]) == 0:
                 status = STATUS.IDLE
             else:
-                status = STATUS.ERROR
-
-            if int(data_reg[5]) == 1:
                 errorCode = 1
-            else:
-                errorCode = 0
 
-            # parsing data
-            input_data           = int(self._parse_register_data(reg.registers, 12, 13))
-            output_data          = int(self._parse_register_data(reg.registers, 4, 5))
-            changeProduct_data   = int(data_reg[8])
-            uv3_data             = int(data_reg[20])
-            uv2_data             = int(data_reg[32])
-            uv1_data             = int(data_reg[44])
+            if int(registerData[16]) == 0:
+                errorCode = 0
+            else:
+                errorCode = 1
+
+            input_data           = int(self._parse_register_data(registerData, 12, 13))
+            output_data          = int(self._parse_register_data(registerData, 4, 5))
+            changeProduct_data   = int(registerData[8])
+            uv3_data             = int(registerData1[0])
+            uv2_data             = int(registerData2[1])
+            uv1_data             = int(registerData2[13])
 
             captured_data[device_id]["input"]           = input_data
             captured_data[device_id]["output"]          = output_data
@@ -78,41 +120,47 @@ class BoxFoldingMachine(BaseModbusPLC):
                                                                                  device["COUNT"], 
                                                                                  device["UID"]))
             device_id = device["ID"]
-            reg_one = self.modbus_client.read_holding_registers(
-            address = device["ADDRESS"], 
-            count   = device["COUNT"], 
-            unit    = device["UID"]
+            r = self._modbusMaster.read_holding_registers(
+                address = device["ADDRESS"], 
+                count   = device["COUNT"], 
+                unit    = device["UID"]
             )
-            reg_two = self.modbus_client.read_holding_registers(
+            r1 = self._modbusMaster.read_holding_registers(
                 address = device["ADDRESS1"], 
                 count   = device["COUNT1"], 
                 unit    = device["UID"]
             )
-        
-            logging.debug(f"{device['ID']} --- {reg_one}")
-            logging.debug(f"{device['ID']} --- {reg_two}")
-            data_reg_one = reg_one.registers
-            data_reg_two = reg_two.registers
+            r2 = self._modbusMaster.read_holding_registers(
+                address = device["ADDRESS2"], 
+                count   = device["COUNT2"], 
+                unit    = device["UID"]
+            )
+            
+            # logging.warning(f"{device['ID']} --- {r}")
+            registerData    = r.registers
+            registerData1   = r1.registers
+            registerData2   = r2.registers
 
-            status = STATUS.DISCONNECT
-            errorCode = 0
-            # status and error code
-            if int(data_reg_one[0]) == 1:
+            if int(registerData[0]) == 1:
                 status = STATUS.RUN
-            elif int(data_reg_one[0]) == 0:
+            elif int(registerData[0]) == 0:
                 status = STATUS.IDLE
             else:
                 errorCode = 1
 
-            if int(data_reg_one[16]) == 0:
+            if int(registerData[16]) == 0:
                 errorCode = 0
             else:
                 errorCode = 1
-            
-            
-            input_data           = int(data_reg_one[28])
-            output_data          = int(data_reg_one[12])
-            product_change       = int(data_reg_one[8])
+
+            upperAirPressure    = int(registerData1[0])/10
+            lowerAirPressure    = int(registerData1[4])/10
+            gluePressure        = int(registerData1[8])/10
+            glueTemp            = int(registerData1[12])/10
+
+            input_data          = int(registerData2[0])
+            output_data         = int(registerData[12])
+            product_change      = int(registerData[8])
             # pasing data
             upperAirPressure    = int(data_reg_two[0])/10
             lowerAirPressure    = int(data_reg_two[4])/10
@@ -147,34 +195,36 @@ class CuttingMachine(BaseModbusPLC):
                                                                                  device["COUNT"], 
                                                                                  device["UID"]))
             device_id = device["ID"]
-            reg = self.modbus_client.read_holding_registers(
-            address = device["ADDRESS"], 
-            count   = device["COUNT"], 
-            unit    = device["UID"]
+            r = self._modbusMaster.read_holding_registers(
+                address = device["ADDRESS"], 
+                count   = device["COUNT"], 
+                unit    = device["UID"]
             )
-        
+            # logging.warning(f"{device['ID']} --- {r}")
+            registerData = r.registers
+
+            # status and error code
+            if int(registerData[0]) == 1:
+                status = STATUS.RUN
+            elif int(registerData[0]) == 0:
+                status = STATUS.IDLE
+            else:
+                errorCode = 1
+
+            if int(registerData[16]) == 0:
+                errorCode = 0
+            else:
+                errorCode = 1
+
+            input_data          = int(registerData[12])
+            output_data         = int(registerData[4])
+            product_changed     = int(registerData[8])
+
             logging.debug(f"{device['ID']} --- {reg}")
             data_reg = reg.registers
 
             status = STATUS.DISCONNECT
             errorCode = 0
-            # status and error code
-            if int(data_reg[0]) == 1:
-                status = STATUS.RUN
-            elif int(data_reg[0]) == 0:
-                status = STATUS.IDLE
-            else:
-                errorCode = 1
-
-            if int(data_reg[16]) == 0:
-                errorCode = 0
-            else:
-                errorCode = 1
-            
-            
-            input_data           = int(data_reg[12])
-            output_data          = int(data_reg[4])
-            product_changed       = int(data_reg[8])
 
             captured_data[device_id]["status"] = status
             captured_data[device_id]["errorCode"] = errorCode
@@ -200,46 +250,41 @@ class PrintingMachine(BaseModbusPLC):
                                                                                  device["COUNT"], 
                                                                                  device["UID"]))
             device_id = device["ID"]
-            reg_one = self.modbus_client.read_holding_registers(
-            address = device["ADDRESS"], 
-            count   = device["COUNT"], 
-            unit    = device["UID"]
+            r = self._modbusMaster.read_holding_registers(
+                address = device["ADDRESS"], 
+                count   = device["COUNT"], 
+                unit    = device["UID"]
             )
-            reg_two = self.modbus_client.read_holding_registers(
+            r1 = self._modbusMaster.read_holding_registers(
                 address = device["ADDRESS1"], 
                 count   = device["COUNT1"], 
                 unit    = device["UID"]
             )
-        
-            logging.debug(f"{device['ID']} --- {reg_one}")
-            logging.debug(f"{device['ID']} --- {reg_two}")
-            data_reg_one = reg_one.registers
-            data_reg_two = reg_two.registers
-
-            status = STATUS.DISCONNECT
-            errorCode = 0
-            # status and error code
-            if int(data_reg_one[0]) == 1:
+            
+            # logging.warning(f"{device['ID']} --- {r}")
+            registerData    = r.registers
+            registerData1   = r1.registers
+            # logging.error(f"output - {r.registers[1]}")
+            # logging.error(f"Status - {r.registers[5]}")
+            # logging.error(f"ChangeProduct - {r.registers[11]}")
+            if int(registerData[0]) == 1:
                 status = STATUS.RUN
-            elif int(data_reg_one[1]) ==2:
+            elif int(registerData[0]) == 2:
                 status = STATUS.IDLE
             else:
                 errorCode = 1
 
-            if int(data_reg_one[12]) == 0:
+            if int(registerData[12]) == 0:
                 errorCode = 0
             else:
                 errorCode = 1
-            
-            
-            input_data           = int(data_reg_one[28])
-            output_data          = int(data_reg_one[12])
-            product_change       = int(data_reg_one[8])
-            # pasing data
-            envTemp         = int(data_reg_two[0])/10
-            envHum          = int(data_reg_two[4])/10
-            waterTemp       = int(data_reg_two[8])/10
-            waterpH         = int(data_reg_two[12])/10
+            envTemp         = int(registerData1[0])/10
+            envHum          = int(registerData1[4])/10
+            waterTemp       = int(registerData1[8])/10
+            waterpH         = int(registerData1[12])/10
+            input_data           = int(registerData[28])
+            output_data          = int(registerData[12])
+            product_change   = int(registerData[8])
 
             captured_data[device_id]["status"] = status
             captured_data[device_id]["errorCode"] = errorCode
