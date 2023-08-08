@@ -15,7 +15,7 @@ def on_connect(client, userdata, flags, rc):
     client.connected_flag       = True
     client.reconnecting_flag    = False
     logging.warning("Connected to broker MQTT")
-    client.subscribe("/TLP/Fre")
+    # client.subscribe("/TLP/Fre")
     
 def on_message(client, userdata, message):
     data    = json.loads(str(message.payload.decode("utf-8")))

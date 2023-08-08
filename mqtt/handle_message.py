@@ -12,16 +12,29 @@ def handle_rate_data(client,data,redisClient):
     recordType = data["record_type"]
     if recordType == "sx":
         redisClient.hset(RedisCnf.RATETOPIC, "production", data["frequency"])
-        schedule.every(data["frequency"]).seconds.do(sync_production_data)
 
     elif recordType == "cl":
         redisClient.hset(RedisCnf.RATETOPIC, "quality", data["frequency"])
-        schedule.every(data["frequency"]).seconds.do(sync_quality_data)
 
     elif recordType == "tb":
         redisClient.hset(RedisCnf.RATETOPIC, "machine", data["frequency"])
-        schedule.every(data["frequency"]).seconds.do(sync_machine_data)
-
+        
+    rate = redisClient.hgetall(RedisCnf.RATETOPIC)
+    if "machine" not in rate:
+        machineRate = GeneralConfig.DEFAULTRATE 
+    else:
+        machineRate = int(rate["machine"])
+    if "quality" not in rate:
+        qualityRate = GeneralConfig.DEFAULTRATE 
+    else:
+        qualityRate = int(rate["quality"])
+    if "production" not in rate:
+        productionRate = GeneralConfig.DEFAULTRATE 
+    else:
+        productionRate = int(rate["production"])
+    schedule.every(machineRate).seconds.do(sync_machine_data)
+    schedule.every(qualityRate).seconds.do(sync_quality_data)
+    schedule.every(productionRate).seconds.do(sync_production_data)
     logging.error(f"Scheduled every {data['frequency']} secs for {recordType} !")
 
 def handle_request_data(deviceId,data,client):

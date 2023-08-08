@@ -27,7 +27,7 @@ class BOX_FOLDING_MACHINE(MACHINE):
             unit    = device["UID"]
         )
         
-        logging.warning(f"{device['ID']} --- {r}")
+        # logging.warning(f"{device['ID']} --- {r}")
         registerData    = r.registers
         registerData1   = r1.registers
         registerData2   = r2.registers

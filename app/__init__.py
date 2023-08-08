@@ -37,6 +37,8 @@ redisClient = redis.Redis(
         charset="utf-8",
         decode_responses = True
     )
+# redisClient.hset("/loop", "active", 0)
+# logging.error("Okkkkkkkkk")
 from app.action.service_utils import init_objects
 init_objects()
 
