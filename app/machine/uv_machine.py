@@ -85,8 +85,7 @@ class UV_MACHINE(MACHINE):
                 upperAirPressure    = -1,
                 lowerAirPressure    = -1,
                 gluePressure        = -1,
-                glueTemp            = -1,
-                isChanging          = changeProduct
+                glueTemp            = -1
                 )
             try:
                 db.session.add(insertData)

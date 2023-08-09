@@ -25,5 +25,4 @@ class MachineData(db.Model):
     lowerAirPressure    = Column("lowerAirPressure", Integer)
     gluePressure        = Column("gluePressure", Float)
     glueTemp            = Column("glueTemp", Float)
-    isChanging          = Column("isChanging", Boolean)
 db.create_all()

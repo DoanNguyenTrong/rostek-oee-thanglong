@@ -85,8 +85,7 @@ class BOX_FOLDING_MACHINE(MACHINE):
                 upperAirPressure    = upperAirPressure,
                 lowerAirPressure    = lowerAirPressure,
                 gluePressure        = gluePressure,
-                glueTemp            = glueTemp,
-                isChanging          = changeProduct
+                glueTemp            = glueTemp
                 )
             try:
                 db.session.add(insertData)

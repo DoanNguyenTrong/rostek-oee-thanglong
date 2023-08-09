@@ -21,33 +21,15 @@ def init_objects():
     boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
     cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
     uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
-    # start_service(boxFoldingMachine, cuttingMachine, uvMachine)
-    start_service(printingMachine)
+    start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
+    # start_service(printingMachine)
 
 def start_service(*args):
     """
     Start instance's internal function
     """
-    # rate = redisClient.hgetall(RedisCnf.RATETOPIC)
-    # if "machine" not in rate:
-    #     machineRate = GeneralConfig.DEFAULTRATE 
-    # else:
-    #     machineRate = int(rate["machine"])
-    # if "quality" not in rate:
-    #     qualityRate = GeneralConfig.DEFAULTRATE 
-    # else:
-    #     qualityRate = int(rate["quality"])
-    # if "production" not in rate:
-    #     productionRate = GeneralConfig.DEFAULTRATE 
-    # else:
-    #     productionRate = int(rate["production"])
     for object in args:
         workers.add_task(object.start)
-        # object.start
-    # schedule.every(machineRate).seconds.do(sync_machine_data)
-    # schedule.every(qualityRate).seconds.do(sync_quality_data)
-    # schedule.every(productionRate).seconds.do(sync_production_data)
-    # workers.add_task(start_scheduling_thread)
 
 def sync_production_data():
     """
@@ -60,7 +42,6 @@ def sync_production_data():
             if data:
                 sendData = {
                     "record_type"   : "sx",
-                    "type"          : data["changeProduct"]     if "changeProduct"  in data else -1,
                     "input"         : data["input"]             if "input"          in data else -1,
                     "output"        : data["output"]            if "output"         in data else -1,
                     "machine_id"    : device["ID"],
@@ -119,7 +100,7 @@ def sync_machine_data():
                     "status"        : data["status"],
                     "type"          : data["errorCode"],
                     "machine_id"    : device["ID"],
-                    "timestamp"  : timeNow,
+                    "timestamp"     : timeNow,
                 }
                 # logging.warning(sendData)
                 try:

@@ -3,7 +3,9 @@ import logging, json, struct, time
 import utils.vntime as VnTimeStamps
 from configure import *
 from ..model.data_model import MachineData
-from app import db, mqtt
+from app import db
+# from app.mqtt_service import mqtt_client
+from app import mqtt_client
 
 class MACHINE():
     def __init__(self,redisClient, configure):
@@ -155,8 +157,7 @@ class MACHINE():
                 output              = output,
                 timestamp           = timeNow,
                 humidity            = humidity,
-                temperature         = temperature,
-                isChanging          = changeProduct
+                temperature         = temperature
                 )
             try:
                 db.session.add(insertData)
@@ -205,7 +206,7 @@ class MACHINE():
         if self.deviceData[deviceId]["changeProduct"] != changeProduct:
             logging.error("Stop changing product")
             self.deviceData[deviceId]["changeProduct"] = 0
-            mqtt.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
+            mqtt_client.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
             return True
 
     def _is_error(self, deviceId, errorCode):
