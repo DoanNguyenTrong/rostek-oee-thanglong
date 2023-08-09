@@ -22,7 +22,7 @@ def init_objects():
     cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
     uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
     # start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
-    start_service(printingMachine)
+    start_service(printingMachine, cuttingMachine, uvMachine)
 
 def start_service(*args):
     """

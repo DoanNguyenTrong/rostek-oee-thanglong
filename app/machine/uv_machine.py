@@ -94,4 +94,4 @@ class UV_MACHINE(MACHINE):
             except:
                 db.session.rollback()
                 db.session.close() 
-            logging.error("Complete saving data!")  
+            logging.info("Complete saving data!")  

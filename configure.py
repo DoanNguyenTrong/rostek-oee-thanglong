@@ -123,4 +123,4 @@ cuttingMachineConfigure = {
     }
 
 # listConfig = [uvMachineConfigure, printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]
-listConfig = [printingMachineConfigure]
+listConfig = [uvMachineConfigure, cuttingMachineConfigure, printingMachineConfigure]

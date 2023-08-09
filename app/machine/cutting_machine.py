@@ -31,8 +31,8 @@ class CUTTING_MACHINE(MACHINE):
         else:
             errorCode = 1
 
-        input           = int(registerData[12])
-        output          = int(registerData[4])
+        input           = int(self._parse_register_data(registerData, 12, 13))
+        output          = int(self._parse_register_data(registerData, 4, 5))
         changeProduct   = int(registerData[8])
         
         statusChange    = self._is_status_change(deviceId,status)
@@ -71,4 +71,4 @@ class CUTTING_MACHINE(MACHINE):
             except:
                 db.session.rollback()
                 db.session.close() 
-            logging.error("Complete saving data!")
+            logging.info("Complete saving data!")

@@ -103,11 +103,12 @@ class MACHINE():
                         logging.error(deviceId)
                         logging.error(str(e))
                         self._trying += 1
-                        if self._trying == 20:
+                        if self._trying == 10:
                             self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
                             self._trying = 0
+                        # self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
                     self._save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
-            time.sleep(GeneralConfig.READINGRATE)
+            # time.sleep(GeneralConfig.READINGRATE)
 
     def _read_modbus_data(self,device,deviceId):
         """
@@ -170,14 +171,14 @@ class MACHINE():
             except:
                 db.session.rollback()
                 db.session.close() 
-            logging.error("Complete saving data!")
+            logging.info("Complete saving data!")
 
     def _is_status_change(self, deviceId, status):
         """
         Check if machine status change
         """
         if self.deviceData[deviceId]["status"] != status:
-            logging.error(f"Status change, previous status: {self.deviceData[deviceId]['status']} - current status {status}")
+            logging.info(f"{deviceId} - Status change, previous status: {self.deviceData[deviceId]['status']} - current status {status}")
             self.deviceData[deviceId]["status"] = status
             return True
         return False
@@ -187,7 +188,7 @@ class MACHINE():
         Check if output change
         """
         if self.deviceData[deviceId]["output"] != output:
-            logging.error(f"output change, previous output: {self.deviceData[deviceId]['output']} - current output {output}")
+            logging.info(f"{deviceId} - Output change, previous output: {self.deviceData[deviceId]['output']} - current output {output}")
             self.deviceData[deviceId]["output"] = output
             return True
         return False
@@ -197,7 +198,7 @@ class MACHINE():
         Check if input change
         """
         if self.deviceData[deviceId]["input"] != input:
-            logging.error(f"input change, previous input: {self.deviceData[deviceId]['input']} - current input {input}")
+            logging.info(f"{deviceId} - Input change, previous input: {self.deviceData[deviceId]['input']} - current input {input}")
             self.deviceData[deviceId]["input"] = input
             return True
         return False
@@ -208,7 +209,7 @@ class MACHINE():
         """
         now = VnTimeStamps.now()
         if self.deviceData[deviceId]["changeProduct"] != changeProduct:
-            logging.error("Stop changing product")
+            logging.info(f"{deviceId} - Stop changing product")
             self.deviceData[deviceId]["changeProduct"] = 0
             mqtt.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
             return True
@@ -218,7 +219,7 @@ class MACHINE():
         Check if error
         """
         if self.deviceData[deviceId]["errorCode"] != errorCode:
-            logging.error(f"Error code change, previous errorCode: {self.deviceData[deviceId]['errorCode']} - current Error code {errorCode}")
+            logging.info(f"{deviceId} - Error code change, previous errorCode: {self.deviceData[deviceId]['errorCode']} - current Error code {errorCode}")
             self.deviceData[deviceId]["errorCode"] = errorCode
             return True
         return False
