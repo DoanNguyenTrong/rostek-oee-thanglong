@@ -5,14 +5,15 @@ from configure import *
 from ..model.data_model import MachineData
 from app import db
 # from app.mqtt_service import mqtt_client
-from app import mqtt_client
+from app import mqtt
 
 class MACHINE():
     def __init__(self,redisClient, configure):
-        self._redisClient          = redisClient
-        self._modbusConnection     = False
-        self._kernelActive         = False
-        self._configure            = configure
+        self._redisClient           = redisClient
+        self._modbusConnection      = False
+        self._kernelActive          = False
+        self._configure             = configure
+        self._trying                = 0
         self.deviceData             = {}
         self._get_redis_data()
 
@@ -101,7 +102,10 @@ class MACHINE():
                     except Exception as e:
                         logging.error(deviceId)
                         logging.error(str(e))
-                        self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
+                        self._trying += 1
+                        if self._trying == 20:
+                            self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
+                            self._trying = 0
                     self._save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
             time.sleep(GeneralConfig.READINGRATE)
 
@@ -206,7 +210,7 @@ class MACHINE():
         if self.deviceData[deviceId]["changeProduct"] != changeProduct:
             logging.error("Stop changing product")
             self.deviceData[deviceId]["changeProduct"] = 0
-            mqtt_client.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
+            mqtt.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
             return True
 
     def _is_error(self, deviceId, errorCode):

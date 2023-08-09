@@ -21,8 +21,8 @@ def init_objects():
     boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
     cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
     uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
-    start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
-    # start_service(printingMachine)
+    # start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
+    start_service(printingMachine)
 
 def start_service(*args):
     """

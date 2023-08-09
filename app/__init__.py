@@ -4,7 +4,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_mqtt import Mqtt
-import logging
+import logging, time
 
 # logging.basicConfig(filename='logging.log',level=logging.INFO)
 """
@@ -50,7 +50,8 @@ app.config['MQTT_TLS_ENABLED'] = False  # set TLS to disabled for testing purpos
 app.config['MQTT_CLEAN_SESSION'] = True
 
 mqtt = Mqtt(app)
-
+time.sleep(1)
+mqtt.subscribe("TLP/Fre")
 from app.mqtt_handler import *
 
 from app.action.service_utils import init_objects
