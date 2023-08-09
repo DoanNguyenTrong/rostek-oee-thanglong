@@ -26,8 +26,7 @@ class MQTTCnf(object):
     STARTPRODUCTION     = "TLP/Tinhsanluong"
     TESTPRODUCTION      = "TLP/Thunghiem"
     MACHINETOPIC        = "TLP/Thietbi"
-    MACHINETOPIC        = "test/test"
-    RATETOPIC           = "TLP/Fre"
+    RATETOPIC           = "/TLP/Fre"
     RECALLTOPIC         = "TLP/Recall"
 
     MQTT_KEEPALIVE      = 5

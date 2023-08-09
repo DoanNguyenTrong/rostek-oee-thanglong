@@ -51,7 +51,7 @@ app.config['MQTT_CLEAN_SESSION'] = True
 
 mqtt = Mqtt(app)
 time.sleep(1)
-mqtt.subscribe("TLP/Fre")
+mqtt.subscribe(MQTTCnf.RATETOPIC)
 from app.mqtt_handler import *
 
 from app.action.service_utils import init_objects
