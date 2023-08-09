@@ -21,13 +21,19 @@ class PRINTING_MACHINE(MACHINE):
             count   = device["COUNT1"], 
             unit    = device["UID"]
         )
+        r2 = self._modbusMaster.read_holding_registers(
+            address = device["ADDRESS2"], 
+            count   = device["COUNT2"], 
+            unit    = device["UID"]
+        )
         
-        # logging.warning(f"{device['ID']} --- {r}")
+        # logging.warning(f"{device['ID']} --- {r.register}")
+        # logging.warning(f"{device['ID']} --- {r1.register}")
+        # logging.warning(f"{device['ID']} --- {r2.register}")
         registerData    = r.registers
         registerData1   = r1.registers
-        # logging.error(f"output - {r.registers[1]}")
-        # logging.error(f"Status - {r.registers[5]}")
-        # logging.error(f"ChangeProduct - {r.registers[11]}")
+        registerData2   = r2.registers
+        status = 0
         if int(registerData[0]) == 1:
             status = STATUS.RUN
         elif int(registerData[0]) == 2:
@@ -40,12 +46,13 @@ class PRINTING_MACHINE(MACHINE):
         else:
             errorCode = 1
         envTemp         = int(registerData1[0])/10
-        envHum          = int(registerData1[4])/10
+        envHum          = int(registerData1[4])
         waterTemp       = int(registerData1[8])/10
         waterpH         = int(registerData1[12])/10
-        input           = int(registerData[28])
-        output          = int(registerData[12])
+        input           = int(self._parse_register_data(registerData2, 0, 1))
+        output          = int(self._parse_register_data(registerData, 4, 5))
         changeProduct   = int(registerData[8])
+        # logging.error(changeProduct)
 
         self.deviceData[deviceId]["envTemp"]    = envTemp
         self.deviceData[deviceId]["envHum"]     = envHum

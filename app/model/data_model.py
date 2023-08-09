@@ -16,7 +16,7 @@ class MachineData(db.Model):
     envTemp             = Column("envTemp", Float)
     envHum              = Column("envHum", Float)
     waterTemp           = Column("waterTemp", Float)
-    waterpH             = Column("waterpH", Float)
+    waterpH             = Column("waterpH", String(1000))
     timestamp           = Column("timestamp", Integer)
     uv1                 = Column("uv1", Integer)
     uv2                 = Column("uv2", Integer)
@@ -26,3 +26,4 @@ class MachineData(db.Model):
     gluePressure        = Column("gluePressure", Float)
     glueTemp            = Column("glueTemp", Float)
     isChanging          = Column("isChanging", Boolean)
+db.create_all()

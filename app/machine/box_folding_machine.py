@@ -31,9 +31,7 @@ class BOX_FOLDING_MACHINE(MACHINE):
         registerData    = r.registers
         registerData1   = r1.registers
         registerData2   = r2.registers
-        # logging.error(f"output - {r.registers[1]}")
-        # logging.error(f"Status - {r.registers[5]}")
-        # logging.error(f"ChangeProduct - {r.registers[11]}")
+        status = 0 
         if int(registerData[0]) == 1:
             status = STATUS.RUN
         elif int(registerData[0]) == 0:

@@ -3,7 +3,7 @@ import logging, time
 
 modbusMaster = ModbusSerialClient(
                 method      = "rtu", 
-                port        = "/dev/ttyAMA3", 
+                port        = "/dev/ttyAMA4", 
                 timeout     = 1, 
                 baudrate    = 9600
             )
@@ -13,7 +13,7 @@ while True:
         logging.error("Trying")
         r = modbusMaster.read_holding_registers(
                     address = 4616, 
-                    count   = 1, 
+                    count   = 17, 
                     unit    = 3
                 )
         print(r.registers)

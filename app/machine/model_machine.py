@@ -3,7 +3,7 @@ import logging, json, struct, time
 import utils.vntime as VnTimeStamps
 from configure import *
 from ..model.data_model import MachineData
-from app import db
+from app import db, mqtt
 
 class MACHINE():
     def __init__(self,redisClient, configure):
@@ -97,6 +97,7 @@ class MACHINE():
                         # logging.critical(self._read_modbus_data)
                         self._read_modbus_data(device,deviceId)
                     except Exception as e:
+                        logging.error(deviceId)
                         logging.error(str(e))
                         self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
                     self._save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
@@ -113,9 +114,8 @@ class MACHINE():
         )
         logging.warning(f"{device['ID']} --- {r}")
         registerData = r.registers
-        # logging.error(f"output - {r.registers[1]}")
-        # logging.error(f"Status - {r.registers[5]}")
-        # logging.error(f"ChangeProduct - {r.registers[11]}")
+        
+        status = 0
         if int(registerData[5]) == 1:
             status = STATUS.RUN
         elif int(registerData[5]) == 2:
@@ -167,7 +167,6 @@ class MACHINE():
                 db.session.close() 
             logging.error("Complete saving data!")
 
-
     def _is_status_change(self, deviceId, status):
         """
         Check if machine status change
@@ -203,18 +202,11 @@ class MACHINE():
         Check if changing product
         """
         now = VnTimeStamps.now()
-        if self.deviceData[deviceId]["changeProduct"] == 0 and changeProduct == 1:
-            logging.error("Start changing product")
-            self.deviceData[deviceId]["changeProduct"] = changeProduct
+        if self.deviceData[deviceId]["changeProduct"] != changeProduct:
+            logging.error("Stop changing product")
+            self.deviceData[deviceId]["changeProduct"] = 0
+            mqtt.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
             return True
-        elif self.deviceData[deviceId]["changeProduct"] == 1 and changeProduct == 0:
-            logging.error(f"Stop changing product")
-            self.deviceData[deviceId]["changeProduct"] = changeProduct
-            from mqtt import mqtt_client
-            mqtt_client.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
-            return True
-        else:
-            return False
 
     def _is_error(self, deviceId, errorCode):
         """

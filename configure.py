@@ -3,7 +3,7 @@ class ModbusCnf(object):
     METHOD      = "rtu"
     PORT        = "/dev/ttyAMA4"
     COUNT       = 5
-    TIMEOUT     = 1
+    TIMEOUT     = 2
     BAUDRATE    = 9600
 
 class STATUS(object):
@@ -47,8 +47,8 @@ class FLASK(object):
 
 uvMachineConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA3",
-        "TIMEOUT"       :  1,
+        "PORT"          :  "/dev/ttyAMA4",
+        "TIMEOUT"       :  2,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
@@ -58,7 +58,7 @@ uvMachineConfigure = {
                 "ADDRESS"   : 4596,
                 "ADDRESS1"  : 4616,
                 "ADDRESS2"  : 4627,
-                "COUNT1"    : 11,
+                "COUNT1"    : 1,
                 "COUNT2"    : 14,
             }
         ]
@@ -66,17 +66,19 @@ uvMachineConfigure = {
 
 printingMachineConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA2",
-        "TIMEOUT"       :  1,
+        "PORT"          :  "/dev/ttyAMA3",
+        "TIMEOUT"       :  2,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
                 "ID"        : "GL_637CIR",
                 "UID"       : 1,
-                "COUNT"     : 29,
+                "COUNT"     : 13,
                 "COUNT1"    : 13,
+                "COUNT2"    : 2,
                 "ADDRESS"   : 4596,
                 "ADDRESS1"  : 4676,
+                "ADDRESS2"  : 4624,
             }
         ]
     }
@@ -84,7 +86,7 @@ printingMachineConfigure = {
 boxFoldingMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA1",
-        "TIMEOUT"       :  1,
+        "TIMEOUT"       :  2,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
@@ -102,8 +104,8 @@ boxFoldingMachineConfigure = {
  
 cuttingMachineConfigure = {
         "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA4",
-        "TIMEOUT"       :  1,
+        "PORT"          :  "/dev/ttyAMA1",
+        "TIMEOUT"       :  2,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
@@ -115,4 +117,5 @@ cuttingMachineConfigure = {
         ]
     }
 
-listConfig = [uvMachineConfigure, printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]
+# listConfig = [uvMachineConfigure, printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]
+listConfig = [printingMachineConfigure]

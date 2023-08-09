@@ -29,13 +29,12 @@ class UV_MACHINE(MACHINE):
         )
         
         # logging.warning(f"{device['ID']} --- {r.registers}")
+        # logging.warning(f"{device['ID']} --- {r1.registers}")
+        # logging.warning(f"{device['ID']} --- {r2.registers}")
         registerData    = r.registers
         registerData1   = r1.registers
         registerData2   = r2.registers
-        # logging.error(f"{device['ID']} --- {r1.registers}")
-        # logging.error(f"output - {r.registers[1]}")
-        # logging.error(f"Status - {r.registers[5]}")
-        # logging.error(f"ChangeProduct - {r.registers[11]}")
+        status = 0 
         if int(registerData[0]) == 1:
             status = STATUS.RUN
         elif int(registerData[0]) == 0:

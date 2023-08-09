@@ -16,11 +16,9 @@ class CUTTING_MACHINE(MACHINE):
             count   = device["COUNT"], 
             unit    = device["UID"]
         )
-        # logging.warning(f"{device['ID']} --- {r}")
+        # logging.warning(f"{device['ID']} --- {r.registers}")
         registerData = r.registers
-        # logging.error(f"output - {r.registers[1]}")
-        # logging.error(f"Status - {r.registers[5]}")
-        # logging.error(f"ChangeProduct - {r.registers[11]}")
+        status = 0 
         if int(registerData[0]) == 1:
             status = STATUS.RUN
         elif int(registerData[0]) == 0:
