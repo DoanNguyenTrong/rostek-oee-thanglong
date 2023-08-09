@@ -8,7 +8,7 @@ from app.machine.cutting_machine import CUTTING_MACHINE
 from app.machine.uv_machine import UV_MACHINE
 from utils.threadpool import ThreadPool
 import utils.vntime as VnTimeStamps
-from app import redisClient, db, mqtt, app
+from app import redisClient, db, mqtt_client
 
 workers = ThreadPool(10)
 
@@ -49,7 +49,7 @@ def sync_production_data():
                 }
                 # logging.warning(sendData)
                 try:
-                    mqtt.publish(MQTTCnf.PRODUCTIONTOPIC, json.dumps(sendData))
+                    mqtt_client.publish(MQTTCnf.PRODUCTIONTOPIC, json.dumps(sendData))
                     logging.warning("Complete send production data")
                 except:
                     pass
@@ -81,7 +81,7 @@ def sync_quality_data():
                 }
                 # logging.warning(sendData)
                 try:
-                    mqtt.publish(MQTTCnf.QUALITYTOPIC, json.dumps(sendData))
+                    mqtt_client.publish(MQTTCnf.QUALITYTOPIC, json.dumps(sendData))
                     logging.warning("Complete send quality data")
                 except:
                     pass
@@ -104,7 +104,7 @@ def sync_machine_data():
                 }
                 # logging.warning(sendData)
                 try:
-                    mqtt.publish(MQTTCnf.MACHINETOPIC, json.dumps(sendData))
+                    mqtt_client.publish(MQTTCnf.MACHINETOPIC, json.dumps(sendData))
                     logging.warning("Complete send machine data")
                 except:
                     pass

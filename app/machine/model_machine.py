@@ -4,9 +4,7 @@ import utils.vntime as VnTimeStamps
 from configure import *
 from ..model.data_model import MachineData
 from app import db
-# from app.mqtt_service import mqtt_client
-from app import mqtt_client
-
+from app.mqtt_service import mqtt_client
 class MACHINE():
     def __init__(self,redisClient, configure):
         self._redisClient          = redisClient
