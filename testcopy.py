@@ -12,11 +12,23 @@ while True:
     try:
         logging.error("Trying")
         r = modbusMaster.read_holding_registers(
+                    address = 4596, 
+                    count   = 17, 
+                    unit    = 3
+                )
+        r1 = modbusMaster.read_holding_registers(
                     address = 4616, 
                     count   = 17, 
                     unit    = 3
                 )
+        r2 = modbusMaster.read_holding_registers(
+                    address = 4627, 
+                    count   = 17, 
+                    unit    = 3
+                )
         print(r.registers)
+        print(r1.registers)
+        print(r2.registers)
         time.sleep(1)
     except Exception as e:
         # logging.error(e) 

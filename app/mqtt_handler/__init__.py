@@ -15,7 +15,7 @@ def handle_mqtt_message(client, userdata, message):
     topic=message.topic
     try:
         payload=json.loads(message.payload.decode())
-        logging.error(f"{topic} -- {payload}")
+        # logging.error(f"{topic} -- {payload}")
         if "/Fre" in topic:
             handle_rate_data(client,payload,redisClient)
     except:
@@ -39,7 +39,7 @@ def handle_rate_data(client,data,redisClient):
 
     activeScheduling = True
     start_sync_service()
-    logging.error(f"Scheduled every {data['frequency']} secs for {recordType} !")
+    # logging.error(f"Scheduled every {data['frequency']} secs for {recordType} !")
 
 def handle_request_data(deviceId,data,client):
     """
