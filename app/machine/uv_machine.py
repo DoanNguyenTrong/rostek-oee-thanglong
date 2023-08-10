@@ -11,6 +11,9 @@ class UV_MACHINE(MACHINE):
         """
         Make request to read modbus and parse data 
         """
+        self._thisScan = VnTimeStamps.now()
+        logging.critical(f"{deviceId}---{self._thisScan - self._lastScan}")
+        self._lastScan = self._thisScan
         # logging.critical("Read here")
         r = self._modbusMaster.read_holding_registers(
             address = device["ADDRESS"], 

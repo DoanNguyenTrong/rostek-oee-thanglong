@@ -3,7 +3,7 @@ class ModbusCnf(object):
     METHOD      = "rtu"
     PORT        = "/dev/ttyAMA4"
     COUNT       = 5
-    TIMEOUT     = 2
+    TIMEOUT     = 1
     BAUDRATE    = 9600
 
 class STATUS(object):
@@ -53,7 +53,7 @@ class FLASK(object):
 uvMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA4",
-        "TIMEOUT"       :  2,
+        "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
@@ -72,7 +72,7 @@ uvMachineConfigure = {
 printingMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA3",
-        "TIMEOUT"       :  2,
+        "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
@@ -91,7 +91,7 @@ printingMachineConfigure = {
 boxFoldingMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA1",
-        "TIMEOUT"       :  2,
+        "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
@@ -110,7 +110,7 @@ boxFoldingMachineConfigure = {
 cuttingMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA1",
-        "TIMEOUT"       :  2,
+        "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
@@ -125,7 +125,7 @@ cuttingMachineConfigure = {
 cuttingAndBoxFoldingMachineConfigure = {
         "METHOD"        :  "rtu",
         "PORT"          :  "/dev/ttyAMA1",
-        "TIMEOUT"       :  2,
+        "TIMEOUT"       :  1,
         "BAUDRATE"      :  9600,
         "LISTDEVICE"    : [            
             {
@@ -148,4 +148,5 @@ cuttingAndBoxFoldingMachineConfigure = {
     }
 
 # listConfig = [uvMachineConfigure, printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]
-listConfig = [uvMachineConfigure, cuttingAndBoxFoldingMachineConfigure, printingMachineConfigure]
+# listConfig = [uvMachineConfigure, cuttingAndBoxFoldingMachineConfigure, printingMachineConfigure]
+listConfig = [printingMachineConfigure]

@@ -11,6 +11,9 @@ class PRINTING_MACHINE(MACHINE):
         """
         Make request to read modbus and parse data 
         """
+        self._thisScan = VnTimeStamps.now()
+        logging.critical(f"{deviceId}---{self._thisScan - self._lastScan}")
+        self._lastScan = self._thisScan
         r = self._modbusMaster.read_holding_registers(
             address = device["ADDRESS"], 
             count   = device["COUNT"], 
@@ -52,6 +55,8 @@ class PRINTING_MACHINE(MACHINE):
         input           = int(self._parse_register_data(registerData2, 0, 1))
         output          = int(self._parse_register_data(registerData, 4, 5))
         changeProduct   = int(registerData[8])
+        # logging.critical(changeProduct)
+
         # logging.error(changeProduct)
 
         self.deviceData[deviceId]["envTemp"]    = envTemp

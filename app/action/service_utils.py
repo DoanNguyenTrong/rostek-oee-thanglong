@@ -19,12 +19,13 @@ def init_objects():
     """
     logging.warning("Starting program")
     printingMachine     = PRINTING_MACHINE(redisClient, printingMachineConfigure)
-    boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
+    # boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
     uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
     # cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
     commonMachine       = COMMON_MACHINE(redisClient, cuttingAndBoxFoldingMachineConfigure)
     # start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
-    start_service(printingMachine, commonMachine, uvMachine)
+    # start_service(printingMachine, commonMachine, uvMachine)
+    start_service(printingMachine)
 
 def start_read_modbus_device(*args):
     while True:
