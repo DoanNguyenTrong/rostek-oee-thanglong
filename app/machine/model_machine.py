@@ -24,7 +24,7 @@ class MACHINE():
         self._kernelActive = True
         logging.warning("Init Kernel successful")
         self._connect_modbus()
-        self._start_reading_modbus()
+        # self._start_reading_modbus()
        
     def _get_redis_data(self):
         """
@@ -84,31 +84,31 @@ class MACHINE():
         s = struct.pack(">l", (b<<16)|a)
         return struct.unpack(">l", s)[0]
 
-    def _start_reading_modbus(self):
+    def start_reading_modbus(self):
         """
         Start reading modbus from device 
         """
-        while self._kernelActive:
-            if not self._modbusConnection:
-                self._connect_modbus()
-            else:
-                for device in self._configure["LISTDEVICE"]:
-                    deviceId                                = device["ID"]
-                    self.deviceData[deviceId]["Device_id"]  = deviceId
-                    rawTopic                                = deviceId + "/raw"
-                    try:
-                        # logging.critical(self._read_modbus_data)
-                        self._read_modbus_data(device,deviceId)
-                    except Exception as e:
-                        logging.error(deviceId)
-                        logging.error(str(e))
-                        self._trying += 1
-                        if self._trying == 10:
-                            self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
-                            self._trying = 0
-                        # self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
-                    self._save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
-            # time.sleep(GeneralConfig.READINGRATE)
+        # while self._kernelActive:
+        if not self._modbusConnection:
+            self._connect_modbus()
+        else:
+            for device in self._configure["LISTDEVICE"]:
+                deviceId                                = device["ID"]
+                self.deviceData[deviceId]["Device_id"]  = deviceId
+                rawTopic                                = deviceId + "/raw"
+                try:
+                    # logging.critical(self._read_modbus_data)
+                    self._read_modbus_data(device,deviceId)
+                except Exception as e:
+                    logging.error(deviceId)
+                    logging.error(str(e))
+                    self._trying += 1
+                    if self._trying == 10:
+                        self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
+                        self._trying = 0
+                    # self.deviceData[deviceId]["status"] = STATUS.DISCONNECT
+                self._save_raw_data_to_redis(rawTopic,self.deviceData[deviceId])
+        # time.sleep(GeneralConfig.READINGRATE)
 
     def _read_modbus_data(self,device,deviceId):
         """

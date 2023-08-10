@@ -122,5 +122,30 @@ cuttingMachineConfigure = {
         ]
     }
 
+cuttingAndBoxFoldingMachineConfigure = {
+        "METHOD"        :  "rtu",
+        "PORT"          :  "/dev/ttyAMA1",
+        "TIMEOUT"       :  2,
+        "BAUDRATE"      :  9600,
+        "LISTDEVICE"    : [            
+            {
+                "ID"        : "MK1060MF", # cutting machine
+                "UID"       : 4,
+                "COUNT"     : 17,
+                "ADDRESS"   : 4596,
+            },
+            {
+                "ID"        : "ACE70CS", # Box folding machine
+                "UID"       : 2,
+                "COUNT"     : 17,
+                "ADDRESS"   : 4596,
+                "COUNT1"    : 13,
+                "ADDRESS1"  : 4676,
+                "ADDRESS2"  : 4624,
+                "COUNT2"    : 1,
+            }
+        ]
+    }
+
 # listConfig = [uvMachineConfigure, printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]
-listConfig = [uvMachineConfigure, cuttingMachineConfigure, printingMachineConfigure]
+listConfig = [uvMachineConfigure, cuttingAndBoxFoldingMachineConfigure, printingMachineConfigure]

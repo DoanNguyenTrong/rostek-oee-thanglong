@@ -6,6 +6,7 @@ from app.machine.printing_machine import PRINTING_MACHINE
 from app.machine.box_folding_machine import BOX_FOLDING_MACHINE
 from app.machine.cutting_machine import CUTTING_MACHINE
 from app.machine.uv_machine import UV_MACHINE
+from app.machine.commonMachine import COMMON_MACHINE
 from utils.threadpool import ThreadPool
 import utils.vntime as VnTimeStamps
 from app import redisClient, db, mqtt, app
@@ -19,10 +20,16 @@ def init_objects():
     logging.warning("Starting program")
     printingMachine     = PRINTING_MACHINE(redisClient, printingMachineConfigure)
     boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
-    cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
     uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
+    # cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
+    commonMachine       = COMMON_MACHINE(redisClient, cuttingAndBoxFoldingMachineConfigure)
     # start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
-    start_service(printingMachine, cuttingMachine, uvMachine)
+    start_service(printingMachine, commonMachine, uvMachine)
+
+def start_read_modbus_device(*args):
+    while True:
+        for arg in args:
+            arg.start_reading_modbus()
 
 def start_service(*args):
     """
@@ -30,6 +37,7 @@ def start_service(*args):
     """
     for object in args:
         workers.add_task(object.start)
+    workers.add_task(start_read_modbus_device,*args)
 
 def sync_production_data():
     """
@@ -47,10 +55,10 @@ def sync_production_data():
                     "machine_id"    : device["ID"],
                     "timestamp"     : timeNow,
                 }
-                # logging.warning(sendData)
+                logging.warning(sendData)
                 try:
                     mqtt.publish(MQTTCnf.PRODUCTIONTOPIC, json.dumps(sendData))
-                    logging.warning("Complete send production data")
+                    # logging.warning("Complete send production data")
                 except:
                     pass
             
@@ -79,10 +87,10 @@ def sync_quality_data():
                     "machine_id"    : device["ID"],
                     "timestamp"  : timeNow
                 }
-                # logging.warning(sendData)
+                logging.warning(sendData)
                 try:
                     mqtt.publish(MQTTCnf.QUALITYTOPIC, json.dumps(sendData))
-                    logging.warning("Complete send quality data")
+                    # logging.warning("Complete send quality data")
                 except:
                     pass
 
@@ -102,10 +110,10 @@ def sync_machine_data():
                     "machine_id"    : device["ID"],
                     "timestamp"     : timeNow,
                 }
-                # logging.warning(sendData)
+                logging.warning(sendData)
                 try:
                     mqtt.publish(MQTTCnf.MACHINETOPIC, json.dumps(sendData))
-                    logging.warning("Complete send machine data")
+                    # logging.warning("Complete send machine data")
                 except:
                     pass
 
