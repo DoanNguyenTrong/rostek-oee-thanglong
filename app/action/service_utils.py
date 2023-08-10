@@ -24,8 +24,8 @@ def init_objects():
     # cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
     commonMachine       = COMMON_MACHINE(redisClient, cuttingAndBoxFoldingMachineConfigure)
     # start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
-    # start_service(printingMachine, commonMachine, uvMachine)
-    start_service(printingMachine)
+    start_service(printingMachine, commonMachine, uvMachine)
+    # start_service(printingMachine)
 
 def start_read_modbus_device(*args):
     while True:

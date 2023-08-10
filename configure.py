@@ -26,7 +26,7 @@ class MQTTCnf(object):
     STARTPRODUCTION     = "TLP/Tinhsanluong"
     TESTPRODUCTION      = "TLP/Thunghiem"
     MACHINETOPIC        = "TLP/Thietbi"
-    RATETOPIC           = "/TLP/Fre"
+    RATETOPIC           = "TLP/Fre"
     RECALLTOPIC         = "TLP/Recall"
 
     MQTT_KEEPALIVE      = 5
@@ -148,5 +148,5 @@ cuttingAndBoxFoldingMachineConfigure = {
     }
 
 # listConfig = [uvMachineConfigure, printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]
-# listConfig = [uvMachineConfigure, cuttingAndBoxFoldingMachineConfigure, printingMachineConfigure]
-listConfig = [printingMachineConfigure]
+listConfig = [uvMachineConfigure, cuttingAndBoxFoldingMachineConfigure, printingMachineConfigure]
+# listConfig = [printingMachineConfigure]

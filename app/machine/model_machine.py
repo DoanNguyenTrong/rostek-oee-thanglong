@@ -209,22 +209,24 @@ class MACHINE():
         Check if changing product
         """
         now = VnTimeStamps.now()
-        # if self.deviceData[deviceId]["changeProduct"] != changeProduct:
-        #     logging.info(f"{deviceId} - Stop changing product")
-        #     # self.deviceData[deviceId]["changeProduct"] = 0
-        #     mqtt.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
-        #     return True
-        if self.deviceData[deviceId]["changeProduct"] == 1 and changeProduct == 0:
-            logging.error("Start changing product")
-            self.deviceData[deviceId]["changeProduct"] = changeProduct
-            return True
-        elif self.deviceData[deviceId]["changeProduct"] == 0 and changeProduct == 1:
-            logging.error("Stop changing product ")
-            mqtt.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
-            self.deviceData[deviceId]["changeProduct"] = changeProduct
-            return True
-        else:
-            return False
+        if self._thisScan - self._lastScan > 15:
+            # if self.deviceData[deviceId]["changeProduct"] != changeProduct:
+            #     logging.info(f"{deviceId} - Stop changing product")
+            #     # self.deviceData[deviceId]["changeProduct"] = 0
+            #     mqtt.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
+            #     return True
+            if self.deviceData[deviceId]["changeProduct"] == 1 and changeProduct == 0:
+                logging.error("Start changing product")
+                self.deviceData[deviceId]["changeProduct"] = changeProduct
+                return True
+            elif self.deviceData[deviceId]["changeProduct"] == 0 and changeProduct == 1:
+                logging.error("Stop changing product ")
+                mqtt.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
+                self.deviceData[deviceId]["changeProduct"] = changeProduct
+                return True
+            else:
+                return False
+        return False
 
 
     def _is_error(self, deviceId, errorCode):

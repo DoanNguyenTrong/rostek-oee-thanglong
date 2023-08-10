@@ -13,10 +13,13 @@ def handle_connect(client, userdata, flags, rc):
 @mqtt.on_message()
 def handle_mqtt_message(client, userdata, message):
     topic=message.topic
-    payload=json.loads(message.payload.decode())
-    logging.error(f"{topic} -- {payload}")
-    if "/Fre" in topic:
-        handle_rate_data(client,payload,redisClient)
+    try:
+        payload=json.loads(message.payload.decode())
+        logging.error(f"{topic} -- {payload}")
+        if "/Fre" in topic:
+            handle_rate_data(client,payload,redisClient)
+    except:
+        logging.critical(message.payload.decode())
 
 def handle_rate_data(client,data,redisClient):
     """
