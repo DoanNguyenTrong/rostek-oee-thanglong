@@ -47,10 +47,10 @@ class BOX_FOLDING_MACHINE(MACHINE):
         else:
             errorCode = 1
 
-        upperAirPressure    = int(registerData1[0])/10
-        lowerAirPressure    = int(registerData1[4])/10
-        gluePressure        = int(registerData1[8])/10
-        glueTemp            = int(registerData1[12])/10
+        upperAirPressure    = int(registerData1[4])/10
+        lowerAirPressure    = int(registerData1[8])/10
+        gluePressure        = int(registerData1[12])/10
+        glueTemp            = int(registerData1[0])/10
 
         input           = int(registerData2[0])
         output          = int(registerData[12])
@@ -67,7 +67,7 @@ class BOX_FOLDING_MACHINE(MACHINE):
         changingProduct = self._is_changing_product(deviceId,changeProduct)
         error           = self._is_error(deviceId,errorCode)
 
-        # logging.warning(self.deviceData[deviceId])
+        # logging.critical(self.deviceData[deviceId])
         if statusChange or outputChange or changingProduct or inputChange or error:
             timeNow = int(float(VnTimeStamps.now()))
             self.deviceData[deviceId]["timestamp"]  = timeNow

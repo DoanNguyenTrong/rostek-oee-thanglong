@@ -6,7 +6,6 @@ from app.machine.printing_machine import PRINTING_MACHINE
 from app.machine.box_folding_machine import BOX_FOLDING_MACHINE
 from app.machine.cutting_machine import CUTTING_MACHINE
 from app.machine.uv_machine import UV_MACHINE
-from app.machine.commonMachine import COMMON_MACHINE
 from utils.threadpool import ThreadPool
 import utils.vntime as VnTimeStamps
 from app import redisClient, db, mqtt, app
@@ -19,13 +18,10 @@ def init_objects():
     """
     logging.warning("Starting program")
     printingMachine     = PRINTING_MACHINE(redisClient, printingMachineConfigure)
-    # boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
+    boxFoldingMachine   = BOX_FOLDING_MACHINE(redisClient, boxFoldingMachineConfigure)
     uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
-    # cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
-    commonMachine       = COMMON_MACHINE(redisClient, cuttingAndBoxFoldingMachineConfigure)
-    # start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
-    start_service(printingMachine, commonMachine, uvMachine)
-    # start_service(printingMachine)
+    cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
+    start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
 
 def start_read_modbus_device(*args):
     while True:
@@ -74,17 +70,16 @@ def sync_quality_data():
             if data:
                 sendData = {
                     "record_type"   : "cl",
-                    "w_temp"        : data["waterTemp"] if "waterTemp"  in data else -1,
-                    "ph"            : data["waterpH"]   if "waterpH"    in data else -1,
-                    "t_ev"          : data["envTemp"]   if "envTemp"    in data else -1,
-                    "e_hum"         : data["envHum"]    if "envHum"     in data else -1,
-                    "uv1"           : data["uv1"]       if "uv1"        in data else -1,
-                    "uv2"           : data["uv2"]       if "uv2"        in data else -1,
-                    "uv3"           : data["uv3"]       if "uv3"        in data else -1,
-                    "p_cut"         : data["p_cut"]     if "p_cut"      in data else -1,
-                    "p_conv1"       : data["p_conv"]    if "p_conv"     in data else -1,
-                    "p_conv2"       : data["p_conv"]    if "p_conv"     in data else -1,
-                    "p_gun"         : data["p_gun"]     if "p_gun"      in data else -1,
+                    "w_temp"        : data["waterTemp"]             if "waterTemp"          in data else -1,
+                    "ph"            : data["waterpH"]               if "waterpH"            in data else -1,
+                    "t_ev"          : data["envTemp"]               if "envTemp"            in data else -1,
+                    "e_hum"         : data["envHum"]                if "envHum"             in data else -1,
+                    "uv1"           : data["uv1"]                   if "uv1"                in data else -1,
+                    "uv2"           : data["uv2"]                   if "uv2"                in data else -1,
+                    "uv3"           : data["uv3"]                   if "uv3"                in data else -1,
+                    "p_conv1"       : data["upperAirPressure"]      if "upperAirPressure"   in data else -1,
+                    "p_conv2"       : data["lowerAirPressure"]      if "lowerAirPressure"   in data else -1,
+                    "p_gun"         : data["gluePressure"]          if "gluePressure"           in data else -1,
                     "machine_id"    : device["ID"],
                     "timestamp"  : timeNow
                 }

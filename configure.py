@@ -26,7 +26,7 @@ class MQTTCnf(object):
     STARTPRODUCTION     = "TLP/Tinhsanluong"
     TESTPRODUCTION      = "TLP/Thunghiem"
     MACHINETOPIC        = "TLP/Thietbi"
-    RATETOPIC           = "TLP/Fre"
+    RATETOPIC           = "/TLP/Fre"
     RECALLTOPIC         = "TLP/Recall"
 
     MQTT_KEEPALIVE      = 5
@@ -122,31 +122,5 @@ cuttingMachineConfigure = {
         ]
     }
 
-cuttingAndBoxFoldingMachineConfigure = {
-        "METHOD"        :  "rtu",
-        "PORT"          :  "/dev/ttyAMA1",
-        "TIMEOUT"       :  1,
-        "BAUDRATE"      :  9600,
-        "LISTDEVICE"    : [            
-            {
-                "ID"        : "MK1060MF", # cutting machine
-                "UID"       : 4,
-                "COUNT"     : 17,
-                "ADDRESS"   : 4596,
-            },
-            {
-                "ID"        : "ACE70CS", # Box folding machine
-                "UID"       : 2,
-                "COUNT"     : 17,
-                "ADDRESS"   : 4596,
-                "COUNT1"    : 13,
-                "ADDRESS1"  : 4676,
-                "ADDRESS2"  : 4624,
-                "COUNT2"    : 1,
-            }
-        ]
-    }
 
-# listConfig = [uvMachineConfigure, printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]
-listConfig = [uvMachineConfigure, cuttingAndBoxFoldingMachineConfigure, printingMachineConfigure]
-# listConfig = [printingMachineConfigure]
+listConfig = [uvMachineConfigure, printingMachineConfigure, boxFoldingMachineConfigure, cuttingMachineConfigure]
