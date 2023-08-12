@@ -12,7 +12,7 @@ class BOX_FOLDING_MACHINE(MACHINE):
         Make request to read modbus and parse data 
         """
         self._thisScan = VnTimeStamps.now()
-        logging.critical(f"{deviceId}---{self._thisScan - self._lastScan}")
+        logging.info(f"{deviceId}---{self._thisScan - self._lastScan}")
         self._lastScan = self._thisScan
         r = self._modbusMaster.read_holding_registers(
             address = device["ADDRESS"], 
@@ -52,8 +52,8 @@ class BOX_FOLDING_MACHINE(MACHINE):
         gluePressure        = int(registerData1[12])/10
         glueTemp            = int(registerData1[0])/10
 
-        input           = int(registerData2[0])
-        output          = int(registerData[12])
+        output          = int(registerData[4])
+        input           = int(registerData[12])
         changeProduct   = int(registerData[8])
 
         self.deviceData[deviceId]["upperAirPressure"]   = upperAirPressure

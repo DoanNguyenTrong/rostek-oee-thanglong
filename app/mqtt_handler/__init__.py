@@ -4,7 +4,7 @@ from app.action.service_utils import *
 import logging, json
 from configure import GeneralConfig, RedisCnf
 from utils.threadpool import ThreadPool
-import schedule
+import schedule, socket
 workers = ThreadPool(10)
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
@@ -15,12 +15,30 @@ def handle_mqtt_message(client, userdata, message):
     topic=message.topic
     try:
         payload=json.loads(message.payload.decode())
+        logging.error("Messsssssssage")
         # logging.error(f"{topic} -- {payload}")
         if "/Fre" in topic:
             handle_rate_data(client,payload,redisClient)
+        elif "/cmd" in topic:
+            cmd_handler(payload)
     except:
         logging.critical(message.payload.decode())
 
+def cmd_handler(payload):
+    try:
+        mqtt.publish("/gateway/reply", json.dumps({
+            "local_ip" : get_ip()
+        }))
+    except Exception as e:
+        logging.error(str(e))
+
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 5))
+    ipv4 = s.getsockname()[0]
+    s.close()
+    return ipv4
+                
 def handle_rate_data(client,data,redisClient):
     """
     Handle refresh data rate

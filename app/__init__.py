@@ -10,7 +10,7 @@ import logging, time
 """
 Configure log
 """
-coloredlogs.install(level='info', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
+coloredlogs.install(level='error', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
 
 """
 Configure Flask and database
@@ -52,6 +52,7 @@ app.config['MQTT_CLEAN_SESSION'] = True
 mqtt = Mqtt(app)
 time.sleep(1)
 mqtt.subscribe(MQTTCnf.RATETOPIC)
+mqtt.subscribe('/rostek/cmd')
 from app.mqtt_handler import *
 
 from app.action.service_utils import init_objects
