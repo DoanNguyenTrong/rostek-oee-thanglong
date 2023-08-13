@@ -22,6 +22,8 @@ def init_objects():
     uvMachine           = UV_MACHINE(redisClient, uvMachineConfigure)
     cuttingMachine      = CUTTING_MACHINE(redisClient, cuttingMachineConfigure)
     start_service(printingMachine, boxFoldingMachine, cuttingMachine, uvMachine)
+    # start_service(printingMachine, boxFoldingMachine)
+    # start_service(cuttingMachine, uvMachine)
 
 def start_read_modbus_device(*args):
     while True:

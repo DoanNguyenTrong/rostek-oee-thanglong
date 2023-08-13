@@ -70,7 +70,7 @@ class PRINTING_MACHINE(MACHINE):
         changingProduct = self._is_changing_product(deviceId,changeProduct)
         error           = self._is_error(deviceId,errorCode)
         
-        # logging.warning(self.deviceData[deviceId])
+        # logging.critical(self.deviceData[deviceId])
         if statusChange or outputChange or changingProduct or inputChange or error:
             timeNow = int(float(VnTimeStamps.now()))
             self.deviceData[deviceId]["timestamp"]  = timeNow
