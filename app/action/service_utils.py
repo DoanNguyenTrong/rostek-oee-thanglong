@@ -73,13 +73,14 @@ def sync_quality_data():
                     "w_temp"        : data["waterTemp"]             if "waterTemp"          in data else -1,
                     "ph"            : data["waterpH"]               if "waterpH"            in data else -1,
                     "t_ev"          : data["envTemp"]               if "envTemp"            in data else -1,
+                    "t_gun"         : data["glueTemp"]              if "glueTemp"           in data else -1,
                     "e_hum"         : data["envHum"]                if "envHum"             in data else -1,
                     "uv1"           : data["uv1"]                   if "uv1"                in data else -1,
                     "uv2"           : data["uv2"]                   if "uv2"                in data else -1,
                     "uv3"           : data["uv3"]                   if "uv3"                in data else -1,
                     "p_conv1"       : data["upperAirPressure"]      if "upperAirPressure"   in data else -1,
                     "p_conv2"       : data["lowerAirPressure"]      if "lowerAirPressure"   in data else -1,
-                    "p_gun"         : data["gluePressure"]          if "gluePressure"           in data else -1,
+                    "p_gun"         : data["gluePressure"]          if "gluePressure"       in data else -1,
                     "machine_id"    : device["ID"],
                     "timestamp"  : timeNow
                 }
