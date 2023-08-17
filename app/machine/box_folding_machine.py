@@ -47,8 +47,8 @@ class BOX_FOLDING_MACHINE(MACHINE):
         else:
             errorCode = 1
 
-        upperAirPressure    = int(registerData1[4])/10
-        lowerAirPressure    = int(registerData1[8])/10
+        upperAirPressure    = float(registerData1[4])/1000
+        lowerAirPressure    = float(registerData1[8])/1000
         gluePressure        = int(registerData1[12])/10
         glueTemp            = int(registerData1[0])/10
 

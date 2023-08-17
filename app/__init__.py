@@ -10,7 +10,7 @@ import logging, time
 """
 Configure log
 """
-coloredlogs.install(level='info', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
+coloredlogs.install(level='error', fmt = '[%(hostname)s] [%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)s %(levelname)s %(message)s' )
 
 """
 Configure Flask and database
