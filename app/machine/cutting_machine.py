@@ -27,12 +27,12 @@ class CUTTING_MACHINE(MACHINE):
         elif int(registerData[0]) == 0:
             status = STATUS.IDLE
         else:
-            errorCode = 1
+            errorCode = STATUS.ERROR
 
         if int(registerData[16]) == 0:
-            errorCode = 0
+            errorCode = STATUS.NORMAL
         else:
-            errorCode = 1
+            errorCode = STATUS.ERROR
 
         input           = int(self._parse_register_data(registerData, 12, 13))
         output          = int(self._parse_register_data(registerData, 4, 5))

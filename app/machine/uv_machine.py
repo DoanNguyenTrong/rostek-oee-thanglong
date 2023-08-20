@@ -43,12 +43,12 @@ class UV_MACHINE(MACHINE):
         elif int(registerData[0]) == 0:
             status = STATUS.IDLE
         else:
-            errorCode = 1
+            errorCode = STATUS.ERROR
 
         if int(registerData[16]) == 0:
-            errorCode = 0
+            errorCode = STATUS.NORMAL
         else:
-            errorCode = 1
+            errorCode = STATUS.ERROR
 
         input           = int(self._parse_register_data(r.registers, 12, 13))
         output          = int(self._parse_register_data(r.registers, 4, 5))
@@ -67,7 +67,7 @@ class UV_MACHINE(MACHINE):
         changingProduct = self._is_changing_product(deviceId,changeProduct)
         error           = self._is_error(deviceId,errorCode)
 
-        logging.critical(self.deviceData[deviceId])
+        # logging.critical(self.deviceData[deviceId])
         if statusChange or outputChange or changingProduct or inputChange or error:
             timeNow = int(float(VnTimeStamps.now()))
             self.deviceData[deviceId]["timestamp"]  = timeNow

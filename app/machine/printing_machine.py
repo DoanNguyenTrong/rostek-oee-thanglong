@@ -42,12 +42,12 @@ class PRINTING_MACHINE(MACHINE):
         elif int(registerData[0]) == 2:
             status = STATUS.IDLE
         else:
-            errorCode = 1
+            errorCode = STATUS.ERROR
 
         if int(registerData[12]) == 0:
-            errorCode = 0
+            errorCode = STATUS.NORMAL
         else:
-            errorCode = 1
+            errorCode = STATUS.ERROR
         envTemp         = int(registerData1[0])/10
         envHum          = int(registerData1[4])
         waterTemp       = int(registerData1[8])/10

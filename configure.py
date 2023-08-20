@@ -9,8 +9,9 @@ class ModbusCnf(object):
 class STATUS(object):
     DISCONNECT = 0
     RUN        = 1
-    IDLE       = 2
-    ERROR      = 3
+    IDLE       = 0
+    ERROR      = 1
+    NORMAL     = 0
 
 class MQTTCnf(object):
     BROKER              = "103.1.237.18"

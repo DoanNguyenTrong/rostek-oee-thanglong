@@ -40,12 +40,12 @@ class BOX_FOLDING_MACHINE(MACHINE):
         elif int(registerData[0]) == 0:
             status = STATUS.IDLE
         else:
-            errorCode = 1
+            errorCode = STATUS.ERROR
 
         if int(registerData[16]) == 0:
-            errorCode = 0
+            errorCode = STATUS.NORMAL
         else:
-            errorCode = 1
+            errorCode = STATUS.ERROR
 
         upperAirPressure    = float(registerData1[4])/1000
         lowerAirPressure    = float(registerData1[8])/1000

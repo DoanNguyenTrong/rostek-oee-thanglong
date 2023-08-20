@@ -133,9 +133,9 @@ class MACHINE():
             status = STATUS.ERROR
 
         if int(registerData[5]) == 1:
-            errorCode = 1
+            errorCode = STATUS.ERROR
         else:
-            errorCode = 0
+            errorCode = STATUS.NORMAL
         input           = int(registerData[1])
         output          = int(registerData[1])
         temperature     = float(registerData[5])
