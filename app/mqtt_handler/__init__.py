@@ -5,6 +5,7 @@ import logging, json
 from configure import GeneralConfig, RedisCnf
 from utils.threadpool import ThreadPool
 import schedule, socket
+from datetime import timedelta
 workers = ThreadPool(10)
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
@@ -71,10 +72,17 @@ def query_data(deviceId,timeFrom,timeTo):
 def cmd_handler(payload):
     try:
         mqtt.publish("/gateway/reply", json.dumps({
-            "local_ip" : get_ip()
+            "local_ip"          : get_ip(),
+            "machine_count"     : MachineData.query.count(),
+            "gateway_uptime"    : get_uptime(),
         }))
     except Exception as e:
         logging.error(str(e))
+
+def get_uptime():
+    with open('/proc/uptime', 'r') as f:
+        uptime_seconds = float(f.readline().split()[0])
+    return str(timedelta(seconds = round(uptime_seconds)))
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
