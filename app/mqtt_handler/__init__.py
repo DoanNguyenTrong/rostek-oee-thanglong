@@ -21,8 +21,52 @@ def handle_mqtt_message(client, userdata, message):
             handle_rate_data(client,payload,redisClient)
         elif "/cmd" in topic:
             cmd_handler(payload)
+        elif "/Recall" in topic:
+            handle_request_data(payload, client)
     except:
         logging.critical(message.payload.decode())
+
+def handle_request_data(data,client):
+    """
+    Handle data request from server
+    """
+    deviceId    = data["machine_id"]
+    timeFrom    = data["time_start"]
+    timeTo      = data["time_end"]
+    data = query_data(str(deviceId, timeFrom, timeTo))
+    client.publish(json.dumps(data))
+
+def query_data(deviceId,timeFrom,timeTo):
+    """
+    Query data for request
+    """
+    data = []
+    results = MachineData.query.filter(and_(MachineData.timestamp >= timeFrom,MachineData.timestamp <= timeTo, MachineData.deviceId == deviceId)).all()
+    if results:
+        for result in results:
+            data.append(
+                {
+                    "deviceId"          : result.deviceId,
+                    "machineStatus"     : result.machineStatus,
+                    "output"            : result.output,
+                    "input"             : result.input,
+                    "envTemp"           : result.envTemp,
+                    "envHum"            : result.envHum,
+                    "waterTemp"         : result.waterTemp,
+                    "waterpH"           : result.waterpH,
+                    "timestamp"         : result.timestamp,
+                    "uv1"               : result.uv1,
+                    "uv2"               : result.uv2,
+                    "uv3"               : result.uv3,
+                    "upperAirPressure"  : result.upperAirPressure,
+                    "lowerAirPressure"  : result.lowerAirPressure,
+                    "gluePressure"      : result.gluePressure,
+                    "glueTemp"          : result.glueTemp
+                }
+            )
+        return data
+    else:
+        return -1
 
 def cmd_handler(payload):
     try:

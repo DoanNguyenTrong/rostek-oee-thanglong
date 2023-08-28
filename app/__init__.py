@@ -52,6 +52,7 @@ app.config['MQTT_CLEAN_SESSION'] = True
 mqtt = Mqtt(app)
 time.sleep(1)
 mqtt.subscribe(MQTTCnf.RATETOPIC)
+mqtt.subscribe(MQTTCnf.RECALLTOPIC)
 mqtt.subscribe('/rostek/cmd')
 from app.mqtt_handler import *
 
