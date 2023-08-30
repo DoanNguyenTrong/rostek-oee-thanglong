@@ -3,8 +3,8 @@ import coloredlogs, os, redis
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_mqtt import Mqtt
 import logging, time
+from mqtt import MqttService
 
 # logging.basicConfig(filename='logging.log',level=logging.INFO)
 """
@@ -40,20 +40,9 @@ redisClient = redis.Redis(
         decode_responses = True
     )
 
-app.config['MQTT_BROKER_URL'] = MQTTCnf.BROKER
-app.config['MQTT_BROKER_PORT'] = MQTTCnf.PORT
-app.config['MQTT_USERNAME'] = MQTTCnf.MQTT_USERNAME
-app.config['MQTT_PASSWORD'] = MQTTCnf.MQTT_PASSWORD
-app.config['MQTT_REFRESH_TIME'] = 1.0  # refresh time in seconds
-app.config['MQTT_KEEPALIVE'] = 5  # set the time interval for sending a ping to the broker to 5 seconds
-app.config['MQTT_TLS_ENABLED'] = False  # set TLS to disabled for testing purposes
-app.config['MQTT_CLEAN_SESSION'] = True
 
-mqtt = Mqtt(app)
-time.sleep(1)
-mqtt.subscribe(MQTTCnf.RATETOPIC)
-mqtt.subscribe(MQTTCnf.RECALLTOPIC)
-mqtt.subscribe('/rostek/cmd')
+mqttService = MqttService.get_instance().client
+
 from app.mqtt_handler import *
 
 from app.action.service_utils import init_objects

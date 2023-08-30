@@ -4,8 +4,7 @@ import utils.vntime as VnTimeStamps
 from configure import *
 from ..model.data_model import MachineData
 from app import db
-# from app.mqtt_service import mqtt_client
-from app import mqtt
+from app import mqttService
 
 class MACHINE():
     def __init__(self,redisClient, configure):
@@ -215,7 +214,7 @@ class MACHINE():
         if self.deviceData[deviceId]["changeProduct"] == 0 and changeProduct == 1:
             logging.critical("Start production")
             self._lastChange = now
-            mqtt.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
+            mqttService.publish(MQTTCnf.STARTPRODUCTION, json.dumps(self._generate_start_production_msg(deviceId, now)))
             self.deviceData[deviceId]["changeProduct"] = 1
             return True
         elif (self.deviceData[deviceId]["changeProduct"] == 1) and (self._thisScan - self._lastChange) > 15:
