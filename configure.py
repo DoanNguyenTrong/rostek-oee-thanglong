@@ -43,7 +43,7 @@ class GeneralConfig(object):
     READINGRATE     = 0.5
     SENDINGRATE     = 1
     DEFAULTRATE     = 5
-    LIMITRECORDS    = 50000
+    LIMITRECORDS    = 70000
     DATAFILE        = "data.db"
 
 class FLASK(object):
@@ -119,6 +119,8 @@ cuttingMachineConfigure = {
                 "UID"       : 4,
                 "COUNT"     : 17,
                 "ADDRESS"   : 4596,
+                "COUNT1"    : 4,
+                "ADDRESS1"  : 4518,
             }
         ]
     }

@@ -19,8 +19,14 @@ class CUTTING_MACHINE(MACHINE):
             count   = device["COUNT"], 
             unit    = device["UID"]
         )
+        r1 = self._modbusMaster.read_holding_registers(
+            address = device["ADDRESS1"], 
+            count   = device["COUNT1"], 
+            unit    = device["UID"]
+        )
         # logging.warning(f"{device['ID']} --- {r.registers}")
         registerData = r.registers
+        registerData1 = r1.registers
         status = 0 
         if int(registerData[0]) == 1:
             status = STATUS.RUN
@@ -37,12 +43,15 @@ class CUTTING_MACHINE(MACHINE):
         input           = int(self._parse_register_data(registerData, 12, 13))
         output          = int(self._parse_register_data(registerData, 4, 5))
         changeProduct   = int(registerData[8])
-        
+        temperature     = float(str(registerData1[0])+"."+str(registerData1[1]))
+        humidity        = float(str(registerData1[2])+"."+str(registerData1[3]))
         statusChange    = self._is_status_change(deviceId,status)
         outputChange    = self._is_output_change(deviceId,output)
         inputChange     = self._is_input_change(deviceId, input)
         changingProduct = self._is_changing_product(deviceId,changeProduct)
         error           = self._is_error(deviceId,errorCode)
+        self.deviceData[deviceId]["envTemp"]    = temperature
+        self.deviceData[deviceId]["envHum"]       = humidity
 
         # logging.warning(self.deviceData[deviceId])
         if statusChange or outputChange or changingProduct or inputChange or error:
