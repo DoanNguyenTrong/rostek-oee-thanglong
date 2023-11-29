@@ -1,0 +1,13 @@
+[Unit]
+Description=rostek-gateway-thanglong
+After=network.target
+[Service]
+ExecStart=/home/pi/thanglongpackagingoee/venv/bin/python main.py
+WorkingDirectory=/home/pi/thanglongpackagingoee
+StandardOutput=inherit
+StandardError=inherit
+Restart=on-failure
+RestartSec=60s
+User=pi
+[Install]
+WantedBy=multi-user.target

@@ -7,7 +7,7 @@ class ModbusCnf(object):
     BAUDRATE    = 9600
 
 class STATUS(object):
-    DISCONNECT = 0
+    DISCONNECT = 2
     RUN        = 1
     IDLE       = 0
     ERROR      = 1
